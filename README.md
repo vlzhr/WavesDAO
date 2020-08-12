@@ -46,8 +46,8 @@ In addition, there are Performers (PE) who apply and complete bounties.
 5. **PE:** applies for performing the task *(applyForTask)*
 6. **DM:** votes on task applicants (choose the performer) *(voteForApplicant)*
 7. **WG:** finish performer election *(finishApplicantsVoting)*
-8. **PE:** starts the work on the bounty *(startWork)*
-9. **PE** & **WG**: off-chain coomunication
+8. **PE:** starts work on the bounty *(startWork)*
+9. **PE** & **WG**: off-chain communication
 10. **WG:** accepts a solution and pays a reward *(acceptWorkResult)*
 
 ## Play Around
