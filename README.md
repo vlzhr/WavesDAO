@@ -34,20 +34,21 @@ In addition, there are Performers (PE) who apply and complete bounties.
 
 **Setting DAO**
 
-1. DO: sets the DM list *(addDAOMember)*
-2. DO: sets the WG list *(addGroupMember)*
+1. **DO:** sets the DM list *(addDAOMember)*
+2. **DO:** sets the WG list *(addGroupMember)*
 
 **Making Funds Decisions**
 
-1. WG: proposes task
-2. WG: adds task description and reward amount
-3. DM: votes on task (do we really need it?)
-4. WG: finishes voting on the task
-5. PE: applies for performing the task
-6. DM: votes on task applicants (choose the performer)
-7. WG: finish performer election
-8. PE: completes the task
-9. WG: submits a solution and pays a reward 
+1. **WG:** proposes task *(addTask)*
+2. **WG:** adds task description and reward amount *(addTaskDetails)*
+3. **DM:** votes on task (do we really need it?) *(voteForTaskProposal)*
+4. **WG:** finishes voting on the task *(finishTaskProposalVoting)*
+5. **PE:** applies for performing the task *(applyForTask)*
+6. **DM:** votes on task applicants (choose the performer) *(voteForApplicant)*
+7. **WG:** finish performer election *(finishApplicantsVoting)*
+8. **PE:** starts the work on the bounty *(startWork)*
+9. **PE** & **WG**: off-chain coomunication
+10. **WG:** accepts a solution and pays a reward *(acceptWorkResult)*
 
 ## Play Around
 
