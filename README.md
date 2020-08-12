@@ -26,6 +26,33 @@ DAO Member - a whitelisted person that can take part in the votings. For the dec
 
 Working Group Member - a whitelisted person who is responsible to manage tasks, votings and performers.
 
+## Happy Path
 
+This is the simples algorithm to make decisions in the Waves Association DAO for three user roles: DAO Owner (DO), DAO Member (DM), Working Group Member (WG).
 
+In addition, there are Performers (PE) who apply and complete bounties.
 
+**Setting DAO**
+
+1. DO: sets the DM list *(addDAOMember)*
+2. DO: sets the WG list *(addGroupMember)*
+
+**Making Funds Decisions**
+
+1. WG: proposes task
+2. WG: adds task description and reward amount
+3. DM: votes on task (do we really need it?)
+4. WG: finishes voting on the task
+5. PE: applies for performing the task
+6. DM: votes on task applicants (choose the performer)
+7. WG: finish performer election
+8. PE: completes the task
+9. WG: submits a solution and pays a reward 
+
+## Play Around
+
+https://waves-dapp.com/3MsJ87eiwhT5eUMCmwjVm7VqP74qs48RheF
+
+## Read source code
+
+https://waves-ide.com/s/5f33b6fcd4504a002b45a58d
