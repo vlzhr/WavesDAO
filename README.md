@@ -1,4 +1,6 @@
-# Smart Contract for Waves Association DAO
+# Smart Contract for Waves DAO
+
+VIDEO DEMO ---> https://www.youtube.com/watch?v=fGzLHMJmR0o
 
 You can try it in the auto UI: https://waves-dapp.com/3MsJ87eiwhT5eUMCmwjVm7VqP74qs48RheF
 
@@ -28,7 +30,7 @@ Working Group Member - a whitelisted person who is responsible to manage tasks, 
 
 ## Happy Path
 
-This is the simples algorithm to make decisions in the Waves Association DAO for three user roles: DAO Owner (DO), DAO Member (DM), Working Group Member (WG).
+This is the simplest algorithm to make decisions in the Waves Association DAO for three user roles: DAO Owner (DO), DAO Member (DM), Working Group Member (WG).
 
 In addition, there are Performers (PE) who apply and complete bounties.
 
