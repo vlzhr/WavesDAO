@@ -1,4 +1,4 @@
-# Smart Contract for a Waves Association DAO
+# Smart Contract for Waves Association DAO
 
 You can try it in the auto UI: https://waves-dapp.com/3MsJ87eiwhT5eUMCmwjVm7VqP74qs48RheF
 
