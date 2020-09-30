@@ -2,11 +2,9 @@
 {-# CONTENT_TYPE DAPP #-}
 {-# SCRIPT_TYPE ACCOUNT #-}
 
-let wgfg = base58'3MxFn3u1ujdSadCaCPSzpDKLqXxzZMCdtoy'
-let BOARDtoken = unit
-
 
 let QUORUM = 50  # 50% votes needed
+let WCTid = base58'4zfrrwDVjbGFM8wxbZGriVLY4XJsVD4oNMp21FnDnMAa'
 
 
 func tryGetInteger(key: String) = {
@@ -98,6 +96,26 @@ func addTask(title: String) = {
     }
 }
 
+@Callable(i)
+func rateTask(taskId: String, rate: Int) = {
+    if (!(rate == 1 || rate == -1)) then {
+        throw("your rate needs to be +1 or -1")
+    } else {
+        let pmt = i.payment.extract()
+        if (pmt.assetId != WCTid) then {
+            throw("you need to vote using WCT")
+        } else {
+            let weight = pmt.amount
+            let vote = rate*weight
+            let previousRate = tryGetInteger(taskId+"_community_rate")
+            ScriptResult(
+                WriteSet([DataEntry(taskId+"_community_rate", previousRate+vote)]),
+                TransferSet([ScriptTransfer(i.caller, pmt.amount, pmt.assetId)])
+            )
+        }
+    }
+}
+
 
 @Callable(i)
 func addTaskDetails(taskId: String) = {
@@ -170,12 +188,12 @@ func finishTaskProposalVoting(taskId: String) = {
             if (votingState > 0) then {
                 let votingResult = "ready_to_apply"
                 WriteSet([
-                    DataEntry(i.transactionId.toBase58String() + "_status", votingResult)
+                    DataEntry(taskId + "_status", votingResult)
                 ])
             } else {
                 let votingResult = "rejected"
                 WriteSet([
-                    DataEntry(i.transactionId.toBase58String() + "_status", votingResult)
+                    DataEntry(taskId + "_status", votingResult)
                 ])
             }
         }
@@ -310,5 +328,3 @@ func acceptWorkResult(taskId: String) = {
 
 # @Verifier(tx)
 # func standardVerifier() = sigVerify(tx.bodyBytes, tx.proofs[0], tx.senderPublicKey)
-
-
