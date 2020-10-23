@@ -37,13 +37,13 @@ func getMembers() = {
 
 func isGroupMember(a: Address) = {
     # Grants & Funding group membership check
-    tryGetInteger("group_member_weight_"+a.toString()) > 0
+    tryGetInteger("working_group_member_"+a.toString()+"_weight") > 0
 }
 
 
 func canMemberVote(i: Invocation) = {
     # DAO membership check
-    tryGetInteger("dao_member_weight_"+i.caller.toString()) > 0
+    tryGetInteger("dao_member_"+i.caller.toString()+"_weight") > 0
 }
 
 
@@ -59,9 +59,14 @@ func addDAOMember(memberAddress: String) = {
         let newGroupSize = groupSize + 1
 
         WriteSet([
+            # Parsed in dAPP to dao.members -> list (separator ;)
             DataEntry("dao_members", newGroup),
+
+            # Parsed in dAPP to dao.size
             DataEntry("dao_size", newGroupSize),
-            DataEntry("dao_member_weight_"+memberAddress, 1)
+
+            # Parsed in dAPP to dao.member[id].weight
+            DataEntry("dao_member_"+memberAddress+"_weight", 1)
         ])
     }
 }
@@ -79,9 +84,14 @@ func addGroupMember(memberAddress: String) = {
         let newGroupSize = groupSize + 1
 
         WriteSet([
-            DataEntry("working_group", newGroup),
+            # Parsed in dAPP to working.group.name -> list (separator ;)
+            DataEntry("working_group_name", newGroup),
+
+            # Parsed in dAPP to working.group.size
             DataEntry("working_group_size", newGroupSize),
-            DataEntry("group_member_weight_"+memberAddress, 1)
+
+            # Parsed in dAPP to working.group.member[id].weight
+            DataEntry("working_group_member_"+memberAddress+"_weight", 1)
         ])
     }
 }
@@ -92,7 +102,8 @@ func addTask(title: String) = {
     if (!(isGroupMember(i.caller))) then {
         throw("grants working group access only")
     } else {
-        WriteSet([DataEntry(i.transactionId.toBase58String() + "_task", title)])  # title, description
+        # Parsed in dAPP to tasks[id].title
+        WriteSet([DataEntry("tasks_" + i.transactionId.toBase58String() + "_title", title)])  # title, description
     }
 }
 
@@ -107,9 +118,10 @@ func rateTask(taskId: String, rate: Int) = {
         } else {
             let weight = pmt.amount
             let vote = rate*weight
-            let previousRate = tryGetInteger(taskId+"_community_rate")
+            let previousRate = tryGetInteger("tasks_"+taskId+"_community_rate")
             ScriptResult(
-                WriteSet([DataEntry(taskId+"_community_rate", previousRate+vote)]),
+                # Parsed in dAPP to tasks[id].community.rate
+                WriteSet([DataEntry("tasks_"+taskId+"_community_rate", previousRate+vote)]),
                 TransferSet([ScriptTransfer(i.caller, pmt.amount, pmt.assetId)])
             )
         }
@@ -125,8 +137,11 @@ func addTaskDetails(taskId: String) = {
     } else {
         let reward = i.payment.extract().amount
         WriteSet([
-            DataEntry(taskId + "_reward", reward),
-            DataEntry(taskId + "_status", "proposed")
+            # Parsed in dAPP to tasks[id].reward
+            DataEntry("tasks_"+taskId+"_reward", reward),
+
+            # Parsed in dAPP to tasks[id].status
+            DataEntry("tasks_"+taskId+"_status", "proposed")
         ])
     }
 }
@@ -138,28 +153,31 @@ func voteForTaskProposal(taskId: String, voteValue: Int) = {
     if (!canMemberVote(i)) then {
         throw("you can't vote")
     } else {
-        if (getStringValue(this, taskId+"_status") != "proposed") then {
+        if (getStringValue(this, "tasks_"+taskId+"_status") != "proposed") then {
             throw("voting is closed or not started")
         } else {
             
             if (voteValue != -1 && voteValue != 1) then {
                 throw("you need to vote 1 or -1")
             } else {
-                let voteKey = taskId+"_"+i.caller.toString()+"_vote1"
+                # Parsed in dAPP to tasks[id].voted[userId] -> integer
+                let voteKey = "tasks_"+taskId+"_voted_"+i.caller.toString()
                 let previousVote = tryGetInteger(voteKey)
 
                 if (!(previousVote == 0)) then {
                     throw("you have already voted")
                 } else {
-                    let votingKey = taskId+"_voting1"
+                    # Parsed in dAPP to tasks[id].voting.state -> integer
+                    let votingKey = "tasks_"+taskId+"_voting_state"
                     let votingState = tryGetInteger(votingKey)
 
-                    let votesAmountKey = taskId+"_voting1_amount"
+                    # Parsed in dAPP to tasks[id].voting.amount -> integer
+                    let votesAmountKey = "tasks_"+taskId+"_voting_amount"
                     let votesAmountState = tryGetInteger(votingKey) + 1
 
                     let newVotingState = votingState + voteValue
                     ScriptResult(
-                        WriteSet([   
+                        WriteSet([
                             DataEntry(votingKey, newVotingState),
                             DataEntry(voteKey, voteValue),
                             DataEntry(votesAmountKey, votesAmountState)
@@ -176,24 +194,27 @@ func voteForTaskProposal(taskId: String, voteValue: Int) = {
 
 @Callable(i)
 func finishTaskProposalVoting(taskId: String) = {
-    if ((tryGetInteger(taskId+"_voting1_amount") * 100) / tryGetInteger("dao_size") < QUORUM) then {
+    if ((tryGetInteger("tasks_"+taskId+"_voting_amount") * 100) / tryGetInteger("dao_size") < QUORUM) then {
         throw("more than " + QUORUM.toString() + "% members have to vote before finishing the voting")
     } else {
         if (!(isGroupMember(i.caller))) then {
             throw("grants working group access only")
         } else {
-            let votingKey = taskId+"_voting1"
+            # Parsed in dAPP to tasks[id].voting.state -> integer
+            let votingKey = "tasks_"+taskId+"_voting_state"
             let votingState = tryGetInteger(votingKey)
 
             if (votingState > 0) then {
                 let votingResult = "ready_to_apply"
                 WriteSet([
-                    DataEntry(taskId + "_status", votingResult)
+                    # Parsed in dAPP to tasks[id].status -> string
+                    DataEntry("tasks_" + taskId + "_status", votingResult)
                 ])
             } else {
                 let votingResult = "rejected"
                 WriteSet([
-                    DataEntry(taskId + "_status", votingResult)
+                    # Parsed in dAPP to tasks[id].status -> string
+                    DataEntry("tasks_" + taskId + "_status", votingResult)
                 ])
             }
         }
@@ -204,35 +225,47 @@ func finishTaskProposalVoting(taskId: String) = {
 @Callable(i)
 func applyForTask(taskId: String, teamName: String) = {
     # this func also will operate with teamDesc, requestedReward, etc
-    let listKey = taskId + "_applicants"
+    let listKey = "tasks_"+taskId+"_applicants"
     let currentApplicantsList = match getString(this, listKey) {
         case b:String => b
         case _ => ""
     }
-    let newApplicantsList = currentApplicantsList+";"+teamName
+
+    # Use address leader as identifier team
+    let newApplicantsList = currentApplicantsList+";"+i.caller.toString()
     WriteSet([
-        DataEntry(taskId+"_applicant_"+teamName+"_leader", i.caller.toString()),
+        # Parsed in dAPP to tasks[id].applicant[id].name -> string
+        DataEntry("tasks_"+taskId+"_applicant_"+i.caller.toString()+"_name", teamName),
+
+        # Parsed in dAPP to tasks[id].applicant[id].leader -> id
+        DataEntry("tasks_"+taskId+"_applicant_"+i.caller.toString()+"_leader", i.caller.toString()),
+
+        # Parsed in dAPP to tasks[id].applicants -> list id (separator ;)
         DataEntry(listKey, newApplicantsList)
     ])
 }
 
 
 @Callable(i)
-func voteForApplicant(taskId: String, teamName: String, voteValue: Int) = {
+func voteForApplicant(taskId: String, teamIdentifier: String, voteValue: Int) = {
     if (!canMemberVote(i)) then {
         throw("you can't vote")
     } else {
-        let voteKey = taskId+"_"+i.caller.toString()+"_vote_"+teamName
+        # Parsed in dAPP to tasks[id].vote[meId][teamId] -> boolean
+        let voteKey = "tasks_"+taskId+"_vote_"+i.caller.toString()+teamIdentifier
         let vote = tryGetInteger(voteKey)
         if (vote != 0) then {
             throw("you have already voted on this team")
         } else {
-            let teamVotesAmountKey = taskId+"_applicant_"+teamName+"_votes"
-            let teamScoreKey = taskId+"_applicant_"+teamName+"_score"
+            let teamVotesAmountKey = "tasks_"+taskId+"_applicant_"+teamIdentifier+"_votes"
+            let teamScoreKey = "tasks_"+taskId+"_applicant_"+teamIdentifier+"_score"
             let teamVotesAmount = 1 + tryGetInteger(teamVotesAmountKey)
             let newTeamScore = voteValue + tryGetInteger(teamScoreKey)
             WriteSet([
+                # Parsed in dAPP to tasks[id].applicant[teamId].votes -> integer
                 DataEntry(voteKey, voteValue),
+
+                # Parsed in dAPP to tasks[id].applicant[teamId].score -> integer
                 DataEntry(teamScoreKey, newTeamScore)
             ])
         }
@@ -243,11 +276,11 @@ func voteForApplicant(taskId: String, teamName: String, voteValue: Int) = {
 @Callable(i)
 func finishApplicantsVoting(taskId: String) = {
     func isApplicantVotedEnough(aid: Int, aid2: Int) = {
-        let listKey = taskId + "_applicants"
+        let listKey = "tasks_"+taskId+"_applicants"
         let applicantsList = getStringValue(this, listKey).split(";")
-        let teamName = applicantsList[aid]
+        let teamIdentifier = applicantsList[aid]
 
-        let teamVotesAmountKey = taskId+"_applicant_"+teamName+"_votes"
+        let teamVotesAmountKey = "tasks_"+taskId+"_applicant_"+teamIdentifier+"_votes"
         let teamVotesAmount = tryGetInteger(teamVotesAmountKey)
         if (teamVotesAmount > 0) then {
             1
@@ -256,14 +289,14 @@ func finishApplicantsVoting(taskId: String) = {
         }
     }
     func hasMoreVotes(aid: Int, aid2: Int) = {
-        let listKey = taskId + "_applicants"
+        let listKey = "tasks_"+taskId+"_applicants"
         let applicantsList = getStringValue(this, listKey).split(";")
-        let teamName = applicantsList[aid]
-        let teamVotesAmountKey = taskId+"_applicant_"+teamName+"_votes"
+        let teamIdentifier = applicantsList[aid]
+        let teamVotesAmountKey = "tasks_"+taskId+"_applicant_"+teamIdentifier+"_votes"
         let teamVotesAmount = tryGetInteger(teamVotesAmountKey)
 
-        let team2Name = applicantsList[aid2]
-        let team2VotesAmountKey = taskId+"_applicant_"+team2Name+"_votes"
+        let team2Identifier = applicantsList[aid2]
+        let team2VotesAmountKey = "tasks_"+taskId+"_applicant_"+team2Identifier+"_votes"
         let team2VotesAmount = tryGetInteger(team2VotesAmountKey)
 
         if (teamVotesAmount > team2VotesAmount) then {
@@ -278,13 +311,18 @@ func finishApplicantsVoting(taskId: String) = {
     } else {
         let chosenTeamId = FOLD<2>([0,1], 0, hasMoreVotes)
 
-        let listKey = taskId + "_applicants"
+        let listKey = "tasks_" + taskId + "_applicants"
         let applicantsList = getStringValue(this, listKey).split(";")
-        let teamName = applicantsList[chosenTeamId]
+        let teamIdentifier = applicantsList[chosenTeamId]
         WriteSet([
-            DataEntry(taskId+"_status", "team_chosen"),
-            DataEntry(taskId+"_performer", teamName),
-            DataEntry(taskId+"_applicant_"+teamName+"_work_process", "can_begin")
+            # Parsed in dAPP to tasks[id].status -> string
+            DataEntry("tasks_"+taskId+"_status", "team_chosen"),
+
+            # Parsed in dAPP to tasks[id].performer -> string
+            DataEntry("tasks_"+taskId+"_performer", teamIdentifier),
+
+            # Parsed in dAPP to tasks[id].applicant[teamId].process -> string
+            DataEntry("tasks_"+taskId+"_applicant_"+teamIdentifier+"_process", "can_begin")
         ])
     }
 }
@@ -292,13 +330,16 @@ func finishApplicantsVoting(taskId: String) = {
 
 @Callable(i)
 func startWork(taskId: String) = {
-    let teamName = this.getStringValue(taskId+"_performer")
-    if (i.caller.toString() != this.getStringValue(taskId+"_applicant_"+teamName+"_leader")) then {
+    let teamIdentifier = this.getStringValue("tasks_"+taskId+"_performer")
+    if (i.caller.toString() != this.getStringValue("tasks_"+taskId+"_applicant_"+teamIdentifier+"_leader")) then {
         throw("team leader only")
     } else {
         WriteSet([
-            DataEntry(taskId+"_status", "work_started"),
-            DataEntry(taskId+"_applicant_"+teamName+"_work_process", "work_started")
+            # Parsed in dAPP to tasks[id].status -> string
+            DataEntry("tasks_"+taskId+"_status", "work_started"),
+
+            # Parsed in dAPP to tasks[id].applicant[teamId].process -> string
+            DataEntry("tasks_"+taskId+"_applicant_"+teamIdentifier+"_process", "work_started")
         ])
     }
 }
@@ -310,13 +351,16 @@ func acceptWorkResult(taskId: String) = {
     if (!isGroupMember(i.caller)) then {
         throw("grants working group access only")
     } else {
-        let rewardAmount = tryGetInteger(taskId+"_reward")
-        let teamName = this.getStringValue(taskId+"_performer")
-        let teamAddress = this.getStringValue(taskId+"_applicant_"+teamName+"_leader")
+        let rewardAmount = tryGetInteger("tasks_"+taskId+"_reward")
+        let teamIdentifier = this.getStringValue("tasks_"+taskId+"_performer")
+        let teamAddress = this.getStringValue("tasks_"+taskId+"_applicant_"+teamIdentifier+"_leader")
         ScriptResult(
             WriteSet([
-                DataEntry(taskId+"_status", "work_finished"),
-                DataEntry(taskId+"_applicant_"+teamName+"_work_process", "work_finished")
+                # Parsed in dAPP to tasks[id].status -> string
+                DataEntry("tasks_"+taskId+"_status", "work_finished"),
+
+                # Parsed in dAPP to tasks[id].applicant[teamId].process -> string
+                DataEntry("tasks_"+taskId+"_applicant_"+teamIdentifier+"_process", "work_finished")
             ]),
             TransferSet([
                 ScriptTransfer(teamAddress.addressFromStringValue(), rewardAmount, unit)
