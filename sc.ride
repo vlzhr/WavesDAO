@@ -285,7 +285,7 @@ func finishApplicantsVoting(taskId: String) = {
         if (teamVotesAmount > 0) then {
             1
         } else {
-            throw("not enough votes to make decision on " + teamName)
+            throw("not enough votes to make decision on " + teamIdentifier)
         }
     }
     func hasMoreVotes(aid: Int, aid2: Int) = {
