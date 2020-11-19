@@ -126,7 +126,7 @@ func addTask(title: String, link: String) = {
 
 
 @Callable(i)
-func addTaskDetails(taskId: String) = {
+func addTaskDetails(taskId: String, detailsLink: String) = {
     # will also contain task description / requirements / reward payment model
     if (!(isGroupMember(i.caller))) then {
         throw("grants working group access only")
@@ -135,6 +135,9 @@ func addTaskDetails(taskId: String) = {
         WriteSet([
             # Parsed in dAPP to tasks[id].reward
             DataEntry("tasks_"+taskId+"_reward", reward),
+
+            # Parsed in dAPP to tasks[id].details
+            DataEntry("tasks_"+taskId+"_details", detailsLink),
 
             # Parsed in dAPP to tasks[id].status
             DataEntry("tasks_"+taskId+"_status", "proposed")
@@ -255,6 +258,7 @@ func applyForTask(taskId: String, teamName: String, link: String) = {
 
 @Callable(i)
 func voteForApplicant(taskId: String, teamIdentifier: String, voteValue: Int) = {
+    # eevery DAO member can vote for task applicant with +1 or -1
     if (!canMemberVote(i)) then {
         throw("you can't vote")
     } else {
@@ -374,7 +378,7 @@ func rejectTask(taskId: String) = {
 }
 
 @Callable(i)
-func acceptWorkResult(taskId: String) = {
+func acceptWorkResult(taskId: String, reportLink: String) = {
     if (!isGroupMember(i.caller)) then {
         throw("grants working group access only")
     } else {
@@ -387,7 +391,10 @@ func acceptWorkResult(taskId: String) = {
                 DataEntry("tasks_"+taskId+"_status", "work_finished"),
 
                 # Parsed in dAPP to tasks[id].app[teamId].process -> string
-                DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_process", "work_finished")
+                DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_process", "work_finished"),
+
+                # report is created by Working Group and stored into SC 
+                DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_report", reportLink)
             ]),
             TransferSet([
                 ScriptTransfer(teamAddress.addressFromStringValue(), rewardAmount, unit)
