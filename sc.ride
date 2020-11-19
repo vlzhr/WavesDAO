@@ -26,7 +26,7 @@ func isOwner(address: Address) = {
 }
 
 func getGroup() = {
-    let val = match getString(this, "working_group") {
+    let val = match getString(this, "working_group_members") {
         case b:String => b
         case _ => ""
     }
@@ -97,8 +97,8 @@ func addGroupMember(memberAddress: String) = {
             let newGroupSize = groupSize + 1
 
             WriteSet([
-                # Parsed in dAPP to working.group.name -> list (separator ;)
-                DataEntry("working_group_name", newGroup),
+                # Parsed in dAPP to working.group.members -> list (separator ;)
+                DataEntry("working_group_members", newGroup),
 
                 # Parsed in dAPP to working.group.size
                 DataEntry("working_group_size", newGroupSize),
