@@ -3,14 +3,20 @@
 {-# SCRIPT_TYPE ACCOUNT #-}
 
 
-let QUORUM = 50  # 50% votes needed
-let WCTid = base58'4zfrrwDVjbGFM8wxbZGriVLY4XJsVD4oNMp21FnDnMAa'
-
+let QUORUM = 1  # 1% votes needed
 
 func tryGetInteger(key: String) = {
     let val = match getInteger(this, key) {
         case b:Int => b
         case _ => 0
+    }
+    val
+}
+
+func tryGetString(key: String) = {
+    let val = match getString(this, key) {
+        case b:String => b
+        case _ => ""
     }
     val
 }
@@ -52,22 +58,26 @@ func addDAOMember(memberAddress: String) = {
     if (!isOwner(i.caller)) then {
         throw("access only to the DAO owner")
     } else {
-        let group = getMembers()
-        let newGroup = group + ";" + memberAddress
+        if (tryGetInteger("dao_member_"+memberAddress+"_weight") == 1) then {
+            throw("This user already exists")
+        } else {
+            let group = getMembers()
+            let newGroup = group + ";" + memberAddress
 
-        let groupSize = tryGetInteger("dao_size")
-        let newGroupSize = groupSize + 1
+            let groupSize = tryGetInteger("dao_size")
+            let newGroupSize = groupSize + 1
 
-        WriteSet([
-            # Parsed in dAPP to dao.members -> list (separator ;)
-            DataEntry("dao_members", newGroup),
+            WriteSet([
+                # Parsed in dAPP to dao.members -> list (separator ;)
+                DataEntry("dao_members", newGroup),
 
-            # Parsed in dAPP to dao.size
-            DataEntry("dao_size", newGroupSize),
+                # Parsed in dAPP to dao.size
+                DataEntry("dao_size", newGroupSize),
 
-            # Parsed in dAPP to dao.member[id].weight
-            DataEntry("dao_member_"+memberAddress+"_weight", 1)
-        ])
+                # Parsed in dAPP to dao.member[id].weight
+                DataEntry("dao_member_"+memberAddress+"_weight", 1)
+            ])
+        }
     }
 }
 
@@ -77,54 +87,40 @@ func addGroupMember(memberAddress: String) = {
     if (!isOwner(i.caller)) then {
         throw("access only to the DAO owner")
     } else {
-        let group = getGroup()
-        let newGroup = group + ";" + memberAddress
+        if (tryGetInteger("working_group_member_"+memberAddress+"_weight") == 1) then {
+            throw("This user already exists")
+        } else {
+            let group = getGroup()
+            let newGroup = group + ";" + memberAddress
 
-        let groupSize = tryGetInteger("working_group_size")
-        let newGroupSize = groupSize + 1
+            let groupSize = tryGetInteger("working_group_size")
+            let newGroupSize = groupSize + 1
 
-        WriteSet([
-            # Parsed in dAPP to working.group.name -> list (separator ;)
-            DataEntry("working_group_name", newGroup),
+            WriteSet([
+                # Parsed in dAPP to working.group.name -> list (separator ;)
+                DataEntry("working_group_name", newGroup),
 
-            # Parsed in dAPP to working.group.size
-            DataEntry("working_group_size", newGroupSize),
+                # Parsed in dAPP to working.group.size
+                DataEntry("working_group_size", newGroupSize),
 
-            # Parsed in dAPP to working.group.member[id].weight
-            DataEntry("working_group_member_"+memberAddress+"_weight", 1)
-        ])
+                # Parsed in dAPP to working.group.member[id].weight
+                DataEntry("working_group_member_"+memberAddress+"_weight", 1)
+            ])
+        }
     }
 }
 
 
 @Callable(i)
-func addTask(title: String) = {
+func addTask(title: String, link: String) = {
     if (!(isGroupMember(i.caller))) then {
         throw("grants working group access only")
     } else {
         # Parsed in dAPP to tasks[id].title
-        WriteSet([DataEntry("tasks_" + i.transactionId.toBase58String() + "_title", title)])  # title, description
-    }
-}
-
-@Callable(i)
-func rateTask(taskId: String, rate: Int) = {
-    if (!(rate == 1 || rate == -1)) then {
-        throw("your rate needs to be +1 or -1")
-    } else {
-        let pmt = i.payment.extract()
-        if (pmt.assetId != WCTid) then {
-            throw("you need to vote using WCT")
-        } else {
-            let weight = pmt.amount
-            let vote = rate*weight
-            let previousRate = tryGetInteger("tasks_"+taskId+"_community_rate")
-            ScriptResult(
-                # Parsed in dAPP to tasks[id].community.rate
-                WriteSet([DataEntry("tasks_"+taskId+"_community_rate", previousRate+vote)]),
-                TransferSet([ScriptTransfer(i.caller, pmt.amount, pmt.assetId)])
-            )
-        }
+        WriteSet([
+            DataEntry("tasks_" + i.transactionId.toBase58String() + "_title", title),
+            DataEntry("tasks_" + i.transactionId.toBase58String() + "_link", link)
+        ])  # title, description
     }
 }
 
@@ -156,7 +152,7 @@ func voteForTaskProposal(taskId: String, voteValue: Int) = {
         if (getStringValue(this, "tasks_"+taskId+"_status") != "proposed") then {
             throw("voting is closed or not started")
         } else {
-            
+
             if (voteValue != -1 && voteValue != 1) then {
                 throw("you need to vote 1 or -1")
             } else {
@@ -181,13 +177,14 @@ func voteForTaskProposal(taskId: String, voteValue: Int) = {
                             DataEntry(votingKey, newVotingState),
                             DataEntry(voteKey, voteValue),
                             DataEntry(votesAmountKey, votesAmountState)
-                        ]), TransferSet([
+                        ])
+                        , TransferSet([
                             ScriptTransfer(i.caller, 500000, unit)
                         ])
                     )
                 }
             }
-        }   
+        }
     }
 }
 
@@ -223,26 +220,36 @@ func finishTaskProposalVoting(taskId: String) = {
 
 
 @Callable(i)
-func applyForTask(taskId: String, teamName: String) = {
-    # this func also will operate with teamDesc, requestedReward, etc
-    let listKey = "tasks_"+taskId+"_applicants"
-    let currentApplicantsList = match getString(this, listKey) {
-        case b:String => b
-        case _ => ""
+func applyForTask(taskId: String, teamName: String, link: String) = {
+    let status = tryGetString("tasks_" + taskId + "_status")
+
+    if (status != "ready_to_apply") then {
+        throw("This grant has not yet been approved")
+    } else {
+
+         # this func also will operate with teamDesc, requestedReward, etc
+        let listKey = "tasks_"+taskId+"_applicants"
+        let currentApplicantsList = tryGetString(listKey)
+
+        let applicantKey = drop(i.caller.toString(), 10)
+
+        # Use address leader as identifier team
+        let newApplicantsList = currentApplicantsList+";"+i.caller.toString()
+        WriteSet([
+            # Parsed in dAPP to tasks[id].app[id].name -> string
+            DataEntry("tasks_"+taskId+"_app_"+applicantKey+"_name", teamName),
+            DataEntry("tasks_"+taskId+"_app_"+applicantKey+"_link", link),
+
+            # Parsed in dAPP to tasks[id].app[id].leader -> id
+            DataEntry("tasks_"+taskId+"_app_"+applicantKey+"_leader", i.caller.toString()),
+
+            # Parsed in dAPP to tasks[id].app[id].id -> key
+            DataEntry("tasks_"+taskId+"_app_"+applicantKey+"_id", applicantKey),
+
+            # Parsed in dAPP to tasks[id].apps -> list id (separator ;)
+            DataEntry(listKey, newApplicantsList)
+        ])
     }
-
-    # Use address leader as identifier team
-    let newApplicantsList = currentApplicantsList+";"+i.caller.toString()
-    WriteSet([
-        # Parsed in dAPP to tasks[id].app[id].name -> string
-        DataEntry("tasks_"+taskId+"_app_"+i.caller.toString()+"_name", teamName),
-
-        # Parsed in dAPP to tasks[id].app[id].leader -> id
-        DataEntry("tasks_"+taskId+"_app_"+i.caller.toString()+"_leader", i.caller.toString()),
-
-        # Parsed in dAPP to tasks[id].apps -> list id (separator ;)
-        DataEntry(listKey, newApplicantsList)
-    ])
 }
 
 
@@ -252,7 +259,7 @@ func voteForApplicant(taskId: String, teamIdentifier: String, voteValue: Int) = 
         throw("you can't vote")
     } else {
         # Parsed in dAPP to tasks[id].vote[meId][teamId] -> boolean
-        let voteHash = drop(i.caller.toString(), 25) + drop(teamIdentifier, 25)
+        let voteHash = drop(i.caller.toString(), 10) + drop(teamIdentifier, 10)
         let voteKey = "tasks_"+taskId+"_vote_"+voteHash
         let vote = tryGetInteger(voteKey)
         if (vote != 0) then {
@@ -310,21 +317,27 @@ func finishApplicantsVoting(taskId: String) = {
     if (!(isGroupMember(i.caller))) then {
         throw("grants working group access only")
     } else {
-        let chosenTeamId = FOLD<2>([0,1], 0, hasMoreVotes)
 
-        let listKey = "tasks_" + taskId + "_applicants"
-        let applicantsList = getStringValue(this, listKey).split(";")
-        let teamIdentifier = applicantsList[chosenTeamId]
-        WriteSet([
-            # Parsed in dAPP to tasks[id].status -> string
-            DataEntry("tasks_"+taskId+"_status", "team_chosen"),
+        let listKeys = tryGetString("tasks_" + taskId + "_applicants")
+        let applicantsList = listKeys.split(";")
 
-            # Parsed in dAPP to tasks[id].performer -> string
-            DataEntry("tasks_"+taskId+"_performer", teamIdentifier),
+        if (size(applicantsList) == 0) then {
+            throw("No one has yet responded to the grant")
+        } else {
 
-            # Parsed in dAPP to tasks[id].app[teamId].process -> string
-            DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_process", "can_begin")
-        ])
+            let chosenTeamId = FOLD<2>([0,1], 0, hasMoreVotes)
+            let teamIdentifier = applicantsList[chosenTeamId]
+            WriteSet([
+                # Parsed in dAPP to tasks[id].status -> string
+                DataEntry("tasks_"+taskId+"_status", "team_chosen"),
+
+                # Parsed in dAPP to tasks[id].performer -> string
+                DataEntry("tasks_"+taskId+"_performer", teamIdentifier),
+
+                # Parsed in dAPP to tasks[id].app[teamId].process -> string
+                DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_process", "can_begin")
+            ])
+        }
     }
 }
 
@@ -345,10 +358,23 @@ func startWork(taskId: String) = {
     }
 }
 
+@Callable(i)
+func rejectTask(taskId: String) = {
+    # called by Working Group Member to undo the task
+    # only in extraordinary cases
+    if (!isGroupMember(i.caller)) then {
+        throw("grants working group access only")
+    } else {
+        let teamIdentifier = this.getStringValue("tasks_"+taskId+"_performer")
+        WriteSet([
+            DataEntry("tasks_"+taskId+"_status", "rejected"),
+            DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_process", "rejected")
+        ])
+    }
+}
 
 @Callable(i)
 func acceptWorkResult(taskId: String) = {
-    # TO DISCUSS ::: WHO CAN CONFIRM THE WORK RESULT ?
     if (!isGroupMember(i.caller)) then {
         throw("grants working group access only")
     } else {
