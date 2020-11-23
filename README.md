@@ -34,12 +34,14 @@ This is the simplest algorithm to make decisions in the Waves Association DAO fo
 
 In addition, there are Performers (PE) who apply and complete bounties.
 
-**Setting DAO**
+### Setting DAO
 
 1. **DO:** sets the DM list *(addDAOMember)*
 2. **DO:** sets the WG list *(addGroupMember)*
 
-**Making Funds Decisions**
+### Making Funds Decisions
+
+**Disruptive Tech Grant**
 
 1. **WG:** proposes task *(addTask)*
 2. **WG:** adds task description and reward amount *(addTaskDetails)*
@@ -51,6 +53,21 @@ In addition, there are Performers (PE) who apply and complete bounties.
 8. **PE:** starts work on the bounty *(startWork)*
 9. **PE** & **WG**: off-chain communication
 10. **WG:** accepts a solution and pays a reward *(acceptWorkResult)*
+
+**Interhack Grant**
+
+1. **WG:** proposes task *(addTask)*
+2. **WG:** adds task description and reward amount *(addTaskDetails)*
+3. **DM:** votes on task (do we really need it?) *(voteForTaskProposal)*
+4. **WG:** finishes voting on the task *(finishTaskProposalVoting)*
+5. **PE:** applies for performing the task *(applyForTask)*
+6. **DM:** votes on task applicants (choose the hackathon participants) *(voteForApplicant)*
+7. **WG:** finish participants election *(finishApplicantsVoting)*
+8. **WG:** starts hackathon *(enableSubmissions)*
+9. **PE:** submit solutions *(submitSolution)*
+10. **WG:** stops accepting submissions *(stopSubmissions)*
+11. **JURY:** votes on solutions *(voteForSolution)*
+12. **WG:** accepts the best solution and pays a reward *(acceptWorkResult)*
 
 ## Play Around
 
