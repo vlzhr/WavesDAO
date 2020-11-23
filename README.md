@@ -54,6 +54,17 @@ In addition, there are Performers (PE) who apply and complete bounties.
 9. **PE** & **WG**: off-chain communication
 10. **WG:** accepts a solution and pays a reward *(acceptWorkResult)*
 
+**Web3.0 Development Grant**
+
+1. **PE:** proposes solution *(addTask)*
+2. **PE:** adds solution description and requested reward amount *(addTaskDetails)*
+3. **WG:** initializes a voting on solution *(initTaskVoting)*
+4. **DM:** votes on task (do we really need it?) *(voteForTaskProposal)*
+5. **WG:** finishes voting on the task *(finishTaskProposalVoting)*
+6. **PE:** starts work on the bounty *(startWork)*
+7. **PE** & **WG**: off-chain communication
+8. **WG:** accepts a solution and pays a reward *(acceptWorkResult)*
+
 **Interhack Grant**
 
 1. **WG:** proposes task *(addTask)*
@@ -63,7 +74,7 @@ In addition, there are Performers (PE) who apply and complete bounties.
 5. **PE:** applies for performing the task *(applyForTask)*
 6. **DM:** votes on task applicants (choose the hackathon participants) *(voteForApplicant)*
 7. **WG:** finish participants election *(finishApplicantsVoting)*
-8. **WG:** starts hackathon *(enableSubmissions)*
+8. **WG:** sets jury list & starts hackathon *(enableSubmissions)*
 9. **PE:** submit solutions *(submitSolution)*
 10. **WG:** stops accepting submissions *(stopSubmissions)*
 11. **JURY:** votes on solutions *(voteForSolution)*
