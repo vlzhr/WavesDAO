@@ -71,8 +71,8 @@ In addition, there are Performers (PE) who apply and complete bounties.
 2. **WG:** adds task description and reward amount *(addTaskDetails)*
 3. **DM:** votes on task (do we really need it?) *(voteForTaskProposal)*
 4. **WG:** finishes voting on the task *(finishTaskProposalVoting)*
-5. **PE:** applies for performing the task *(applyForTask)*
-6. **DM:** votes on task applicants (choose the hackathon participants) *(voteForApplicant)*
+5. **PE:** applies for participating in hackathon *(applyForTask)*
+6. **DM:** votes on hackathon participants *(voteForApplicant)*
 7. **WG:** finish participants election *(finishApplicantsVoting)*
 8. **WG:** sets jury list & starts hackathon *(enableSubmissions)*
 9. **PE:** submit solutions *(submitSolution)*
