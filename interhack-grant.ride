@@ -21,7 +21,7 @@ func tryGetString(key: String) = {
     val
 }
 
-let mainContract = base58''
+let mainContract = this
 
 func isOwner(address: Address) = {
     address == this || address == mainContract
@@ -46,7 +46,7 @@ func getMembers() = {
 func isGroupMember(a: Address) = {
     # Grants & Funding group membership check
     let val = match getInteger(mainContract, "working_group_member_"+a.toString()+"_weight") {
-        case b:String => b
+        case b:Int => b
         case _ => 0
     }
     val > 0
@@ -56,7 +56,7 @@ func isGroupMember(a: Address) = {
 func canMemberVote(i: Invocation) = {
     # DAO membership check
     let val = match getInteger(mainContract, "dao_member_"+i.caller.toString()+"_weight") {
-        case b:String => b
+        case b:Int => b
         case _ => 0
     }
     val > 0
