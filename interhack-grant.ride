@@ -125,7 +125,7 @@ func addTask(title: String, link: String) = {
 
 
 @Callable(i)
-func addTaskDetails(taskId: String) = {
+func addReward(taskId: String) = {
     if (!(isGroupMember(i.caller))) then {
         throw("grants working group access only")
     } else {
