@@ -125,14 +125,13 @@ func addTask(title: String, link: String) = {
 
 
 @Callable(i)
-func addTaskDetails(taskId: String, detailsLink: String) = {
+func addTaskDetails(taskId: String) = {
     if (!(isGroupMember(i.caller))) then {
         throw("grants working group access only")
     } else {
         let reward = i.payment.extract().amount
         WriteSet([
             DataEntry("tasks_"+taskId+"_reward", reward),
-            DataEntry("tasks_"+taskId+"_details", detailsLink),
             DataEntry("tasks_"+taskId+"_status", "proposed")
         ])
     }
