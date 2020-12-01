@@ -401,7 +401,6 @@ func rejectTask(taskId: String) = {
     if (!isGroupMember(i.caller)) then {
         throw("grants working group access only")
     } else {
-        let teamIdentifier = this.getStringValue("tasks_"+taskId+"_performer")
         WriteSet([
             DataEntry("tasks_"+taskId+"_status", "rejected")
         ])
