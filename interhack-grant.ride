@@ -3,7 +3,7 @@
 {-# SCRIPT_TYPE ACCOUNT #-}
 
 
-let QUORUM = 50  # 50% votes needed
+let QUORUM = 1  # 1% votes needed
 
 func tryGetInteger(key: String) = {
     let val = match getInteger(this, key) {
@@ -151,18 +151,15 @@ func voteForTaskProposal(taskId: String, voteValue: Int) = {
             if (voteValue != -1 && voteValue != 1) then {
                 throw("you need to vote 1 or -1")
             } else {
-                # Parsed in dAPP to tasks[id].voted[userId] -> integer
                 let voteKey = "tasks_"+taskId+"_voted_"+i.caller.toString()
                 let previousVote = tryGetInteger(voteKey)
 
                 if (!(previousVote == 0)) then {
                     throw("you have already voted")
                 } else {
-                    # Parsed in dAPP to tasks[id].voting.state -> integer
                     let votingKey = "tasks_"+taskId+"_voting_state"
                     let votingState = tryGetInteger(votingKey)
 
-                    # Parsed in dAPP to tasks[id].voting.amount -> integer
                     let votesAmountKey = "tasks_"+taskId+"_voting_amount"
                     let votesAmountState = tryGetInteger(votingKey) + 1
 
@@ -192,20 +189,17 @@ func finishTaskProposalVoting(taskId: String) = {
         if (!(isGroupMember(i.caller))) then {
             throw("grants working group access only")
         } else {
-            # Parsed in dAPP to tasks[id].voting.state -> integer
             let votingKey = "tasks_"+taskId+"_voting_state"
             let votingState = tryGetInteger(votingKey)
 
             if (votingState > 0) then {
                 let votingResult = "ready_to_apply"
                 WriteSet([
-                    # Parsed in dAPP to tasks[id].status -> string
                     DataEntry("tasks_" + taskId + "_status", votingResult)
                 ])
             } else {
                 let votingResult = "rejected"
                 WriteSet([
-                    # Parsed in dAPP to tasks[id].status -> string
                     DataEntry("tasks_" + taskId + "_status", votingResult)
                 ])
             }
@@ -233,7 +227,6 @@ func applyForTask(taskId: String, teamName: String, link: String) = {
             DataEntry("tasks_"+taskId+"_app_"+applicantKey+"_link", link),
             DataEntry("tasks_"+taskId+"_app_"+applicantKey+"_leader", leader),
             DataEntry("tasks_"+taskId+"_app_"+applicantKey+"_id", applicantKey),
-            # Parsed in dAPP to tasks[id].apps -> list id (separator ;)
             DataEntry(listKey, newApplicantsList)
         ])
     }
@@ -246,7 +239,6 @@ func voteForApplicant(taskId: String, teamIdentifier: String, voteValue: Int) = 
     if (!canMemberVote(i)) then {
         throw("you can't vote")
     } else {
-        # Parsed in dAPP to tasks[id].vote[meId][teamId] -> boolean
         let voteHash = drop(i.caller.toString(), 10) + drop(teamIdentifier, 10)
         let voteKey = "tasks_"+taskId+"_vote_"+voteHash
         let vote = tryGetInteger(voteKey)
@@ -258,10 +250,7 @@ func voteForApplicant(taskId: String, teamIdentifier: String, voteValue: Int) = 
             let teamVotesAmount = 1 + tryGetInteger(teamVotesAmountKey)
             let newTeamScore = voteValue + tryGetInteger(teamScoreKey)
             WriteSet([
-                # Parsed in dAPP to tasks[id].app[teamId].votes -> integer
                 DataEntry(voteKey, voteValue),
-
-                # Parsed in dAPP to tasks[id].app[teamId].score -> integer
                 DataEntry(teamScoreKey, newTeamScore)
             ])
         }
@@ -271,6 +260,8 @@ func voteForApplicant(taskId: String, teamIdentifier: String, voteValue: Int) = 
 
 @Callable(i)
 func finishApplicantsVoting(taskId: String) = {
+    # NOT FINISHED LOGIC
+
     let minVotesToApproveApplicant = 1
 
     if (!(isGroupMember(i.caller))) then {
@@ -286,7 +277,6 @@ func finishApplicantsVoting(taskId: String) = {
             throw("No one has applied to the hackathon, yet")
         } else {
             WriteSet([
-                # Parsed in dAPP to tasks[id].performer -> string
                 DataEntry("tasks_"+taskId+"_performer", listKeys),
                 DataEntry("tasks_"+taskId+"_status", "ready_to_submit")
             ])
@@ -377,12 +367,8 @@ func acceptWorkResult(taskId: String, winnerIdentifier: String, reportLink: Stri
         let teamAddress = this.getStringValue("tasks_"+taskId+"_app_"+winnerIdentifier+"_leader")
         ScriptResult(
             WriteSet([
-                # Parsed in dAPP to tasks[id].status -> string
                 DataEntry("tasks_"+taskId+"_status", "work_finished"),
-
-                # Parsed in dAPP to tasks[id].app[teamId].process -> string
                 DataEntry("tasks_"+taskId+"_app_"+winnerIdentifier+"_process", "winner"),
-
                 # report is created by Working Group and stored into SC 
                 DataEntry("tasks_"+taskId+"_report", reportLink)
             ]),
