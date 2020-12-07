@@ -3,7 +3,7 @@
 {-# SCRIPT_TYPE ACCOUNT #-}
 
 
-let QUORUM = 1  # 1% votes needed
+let QUORUM = 50  # 50% votes needed
 
 func tryGetInteger(key: String) = {
     let val = match getInteger(this, key) {
