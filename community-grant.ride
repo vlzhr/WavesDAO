@@ -3,7 +3,7 @@
 {-# SCRIPT_TYPE ACCOUNT #-}
 
 
-let QUORUM = 1  # 1% votes needed
+let QUORUM = 1  # 20% votes needed
 
 func tryGetInteger(key: String) = {
     let val = match getInteger(this, key) {
@@ -63,6 +63,30 @@ func canMemberVote(i: Invocation) = {
 }
 
 
+func getVoteValue(s: String) = {
+    if (s == "like") then {
+        1
+    } else {
+        if (s == "dislike") then {
+            -1
+        } else {
+            throw("you need to vote with 'like' or 'dislike' value")
+        }
+    }
+}
+
+func isVotingLive(taskId: String) = {
+    getStringValue(this, "tasks_"+taskId+"_status") != "proposed"
+}
+
+
+func isQuorumAchieved(taskId: String) = {
+    (tryGetInteger("tasks_"+taskId+"_voting_amount") * 100) / tryGetInteger("dao_size") < QUORUM
+}
+
+
+
+
 
 @Callable(i)
 func addTask(title: String, link: String) = {
@@ -80,7 +104,7 @@ func addTaskDetails(taskId: String, reward: Int) = {
         throw("team leader only")
     } else {
       WriteSet([
-          DataEntry("tasks_"+taskId+"_requestedreward", reward)
+          DataEntry("tasks_"+taskId+"_requestedreward", reward)  # reward counted in WAVES
       ])
     }
 }
@@ -99,46 +123,36 @@ func initTaskVoting(taskId: String) = {
 }
 
 
+
+
 @Callable(i)
-func voteForTaskProposal(taskId: String, voteValue: Int) = {
-    # vote value: 1 or -1
+func voteForTaskProposal(taskId: String, voteValueString: String) = {
+    # vote value: "like" or "dislike"
     if (!canMemberVote(i)) then {
         throw("you can't vote")
     } else {
-        if (getStringValue(this, "tasks_"+taskId+"_status") != "proposed") then {
+        if (isVotingLive(taskId)) then {
             throw("voting is closed or not started")
         } else {
 
-            if (voteValue != -1 && voteValue != 1) then {
-                throw("you need to vote 1 or -1")
+            let voteValue = getVoteValue(voteValueString)
+            let voteKey = "tasks_"+taskId+"_voted_"+i.caller.toString()
+            let previousVote = tryGetInteger(voteKey)
+
+            if (!(previousVote == 0)) then {
+                throw("you have already voted")
             } else {
-                # Parsed in dAPP to tasks[id].voted[userId] -> integer
-                let voteKey = "tasks_"+taskId+"_voted_"+i.caller.toString()
-                let previousVote = tryGetInteger(voteKey)
+                let votingKey = "tasks_"+taskId+"_voting_state"
+                let votingState = tryGetInteger(votingKey)
+                let votesAmountKey = "tasks_"+taskId+"_voting_amount"
+                let votesAmountState = tryGetInteger(votingKey) + 1
 
-                if (!(previousVote == 0)) then {
-                    throw("you have already voted")
-                } else {
-                    # Parsed in dAPP to tasks[id].voting.state -> integer
-                    let votingKey = "tasks_"+taskId+"_voting_state"
-                    let votingState = tryGetInteger(votingKey)
-
-                    # Parsed in dAPP to tasks[id].voting.amount -> integer
-                    let votesAmountKey = "tasks_"+taskId+"_voting_amount"
-                    let votesAmountState = tryGetInteger(votingKey) + 1
-
-                    let newVotingState = votingState + voteValue
-                    ScriptResult(
-                        WriteSet([
-                            DataEntry(votingKey, newVotingState),
-                            DataEntry(voteKey, voteValue),
-                            DataEntry(votesAmountKey, votesAmountState)
-                        ])
-                        , TransferSet([
-                            ScriptTransfer(i.caller, 500000, unit)
-                        ])
-                    )
-                }
+                let newVotingState = votingState + voteValue
+                WriteSet([
+                    DataEntry(votingKey, newVotingState),
+                    DataEntry(voteKey, voteValue),
+                    DataEntry(votesAmountKey, votesAmountState)
+                ])
             }
         }
     }
@@ -147,26 +161,24 @@ func voteForTaskProposal(taskId: String, voteValue: Int) = {
 
 @Callable(i)
 func finishTaskProposalVoting(taskId: String) = {
-    if ((tryGetInteger("tasks_"+taskId+"_voting_amount") * 100) / tryGetInteger("dao_size") < QUORUM) then {
+    if (isQuorumAchieved(taskId)) then {
         throw("more than " + QUORUM.toString() + "% members have to vote before finishing the voting")
     } else {
         if (!(isGroupMember(i.caller))) then {
             throw("grants working group access only")
         } else {
-            # Parsed in dAPP to tasks[id].voting.state -> integer
+
             let votingKey = "tasks_"+taskId+"_voting_state"
             let votingState = tryGetInteger(votingKey)
 
             if (votingState > 0) then {
                 let votingResult = "approved"
                 WriteSet([
-                    # Parsed in dAPP to tasks[id].status -> string
                     DataEntry("tasks_" + taskId + "_status", votingResult)
                 ])
             } else {
                 let votingResult = "rejected"
                 WriteSet([
-                    # Parsed in dAPP to tasks[id].status -> string
                     DataEntry("tasks_" + taskId + "_status", votingResult)
                 ])
             }
@@ -212,9 +224,7 @@ func acceptWorkResult(taskId: String, reportLink: String) = {
         let teamAddress = this.getStringValue("tasks_"+taskId+"_app_"+teamIdentifier+"_leader")
         ScriptResult(
             WriteSet([
-                # Parsed in dAPP to tasks[id].status -> string
                 DataEntry("tasks_"+taskId+"_status", "work_finished"),
-
                 # report is created by Working Group and stored into SC 
                 DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_report", reportLink)
             ]),
