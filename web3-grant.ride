@@ -21,7 +21,7 @@ func tryGetString(key: String) = {
     val
 }
 
-let mainContract = this
+let mainContract = addressFromStringValue("3NCsqf4pFGtECs3vM4j1nKqL6VA3HdiNGeZ") # HERE TO SET MEMBERSHIP SMART CONTRACT ADDRESS
 
 func isOwner(address: Address) = {
     address == this
@@ -91,9 +91,6 @@ func isVotingLive(taskId: String) = {
 func isQuorumAchieved(taskId: String) = {
     (tryGetInteger("tasks_"+taskId+"_voting_amount") * 100) / getDAOSize() < QUORUM
 }
-
-
-
 
 
 @Callable(i)
