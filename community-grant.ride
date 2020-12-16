@@ -43,6 +43,14 @@ func getMembers() = {
     val
 }
 
+func getDAOSize() = {
+    let val = match getInteger(mainContract, "dao_size") {
+        case b:Int => b
+        case _ => 0
+    }
+    val
+}
+
 func isGroupMember(a: Address) = {
     # Grants & Funding group membership check
     let val = match getInteger(mainContract, "working_group_member_"+a.toString()+"_weight") {
@@ -76,12 +84,12 @@ func getVoteValue(s: String) = {
 }
 
 func isVotingLive(taskId: String) = {
-    getStringValue(this, "tasks_"+taskId+"_status") != "proposed"
+    getStringValue(this, "tasks_"+taskId+"_status") == "voting_started"
 }
 
 
 func isQuorumAchieved(taskId: String) = {
-    (tryGetInteger("tasks_"+taskId+"_voting_amount") * 100) / tryGetInteger("dao_size") < QUORUM
+    (tryGetInteger("tasks_"+taskId+"_voting_amount") * 100) / getDAOSize() < QUORUM
 }
 
 
@@ -92,7 +100,8 @@ func isQuorumAchieved(taskId: String) = {
 func addTask(title: String, link: String) = {
     WriteSet([
         DataEntry("tasks_" + i.transactionId.toBase58String() + "_title", title),
-        DataEntry("tasks_" + i.transactionId.toBase58String() + "_link", link)
+        DataEntry("tasks_" + i.transactionId.toBase58String() + "_link", link),
+        DataEntry("tasks_" + i.transactionId.toBase58String() + "_leader", i.caller.toString())
     ])  # title, description
 }
 
@@ -100,7 +109,7 @@ func addTask(title: String, link: String) = {
 @Callable(i)
 func addTaskDetails(taskId: String, reward: Int) = {
     let teamIdentifier = this.getStringValue("tasks_"+taskId+"_performer")
-    if (i.caller.toString() != this.getStringValue("tasks_"+taskId+"_app_"+teamIdentifier+"_leader")) then {
+    if (i.caller.toString() != this.getStringValue("tasks_"+taskId+"_leader")) then {
         throw("team leader only")
     } else {
       WriteSet([
@@ -190,7 +199,7 @@ func finishTaskProposalVoting(taskId: String) = {
 @Callable(i)
 func startWork(taskId: String) = {
     let teamIdentifier = this.getStringValue("tasks_"+taskId+"_performer")
-    if (i.caller.toString() != this.getStringValue("tasks_"+taskId+"_app_"+teamIdentifier+"_leader")) then {
+    if (i.caller.toString() != this.getStringValue("tasks_"+taskId+"_leader")) then {
         throw("team leader only")
     } else {
         WriteSet([
@@ -208,8 +217,7 @@ func rejectTask(taskId: String) = {
     } else {
         let teamIdentifier = this.getStringValue("tasks_"+taskId+"_performer")
         WriteSet([
-            DataEntry("tasks_"+taskId+"_status", "rejected"),
-            DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_process", "rejected")
+            DataEntry("tasks_"+taskId+"_status", "rejected")
         ])
     }
 }
@@ -219,9 +227,9 @@ func acceptWorkResult(taskId: String, reportLink: String) = {
     if (!isGroupMember(i.caller)) then {
         throw("grants working group access only")
     } else {
-        let rewardAmount = tryGetInteger("tasks_"+taskId+"_reward")
+        let rewardAmount = tryGetInteger("tasks_"+taskId+"_requestedreward")
         let teamIdentifier = this.getStringValue("tasks_"+taskId+"_performer")
-        let teamAddress = this.getStringValue("tasks_"+taskId+"_app_"+teamIdentifier+"_leader")
+        let teamAddress = this.getStringValue("tasks_"+taskId+"_leader")
         ScriptResult(
             WriteSet([
                 DataEntry("tasks_"+taskId+"_status", "work_finished"),
