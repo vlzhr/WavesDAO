@@ -108,7 +108,7 @@ func addTaskDetails(taskId: String, reward: Int) = {
             throw("team leader only")
         } else {
         WriteSet([
-            DataEntry("tasks_"+taskId+"_reward", reward.toString())  # reward counted in WAVES
+            DataEntry("tasks_"+taskId+"_reward", reward)  # reward counted in WAVES
         ])
         }
     }
@@ -117,7 +117,6 @@ func addTaskDetails(taskId: String, reward: Int) = {
 
 @Callable(i)
 func initTaskVoting(taskId: String) = {
-    # will also contain task description / requirements / reward payment model
     if (!(isGroupMember(i.caller))) then {
         throw("grants working group access only")
     } else {
