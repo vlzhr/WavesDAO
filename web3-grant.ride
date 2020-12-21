@@ -105,12 +105,14 @@ func addTask(title: String, link: String) = {
 
 @Callable(i)
 func addTaskDetails(taskId: String, reward: Int) = {
-    let teamIdentifier = this.getStringValue("tasks_"+taskId+"_performer")
-    if (i.caller.toString() != this.getStringValue("tasks_"+taskId+"_leader")) then {
+
+    # TODO Add a status check not equal to voting_started
+
+    if (i.caller.toString() != tryGetString("tasks_"+taskId+"_leader")) then {
         throw("team leader only")
     } else {
       WriteSet([
-          DataEntry("tasks_"+taskId+"_requestedreward", reward)  # reward counted in WAVES
+          DataEntry("tasks_"+taskId+"_reward", reward.toString())  # reward counted in WAVES
       ])
     }
 }
@@ -224,7 +226,7 @@ func acceptWorkResult(taskId: String, reportLink: String) = {
     if (!isGroupMember(i.caller)) then {
         throw("grants working group access only")
     } else {
-        let rewardAmount = tryGetInteger("tasks_"+taskId+"_requestedreward")
+        let rewardAmount = tryGetInteger("tasks_"+taskId+"_reward")
         let teamIdentifier = this.getStringValue("tasks_"+taskId+"_performer")
         let teamAddress = this.getStringValue("tasks_"+taskId+"_leader")
         ScriptResult(
