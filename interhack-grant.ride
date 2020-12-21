@@ -21,12 +21,10 @@ func tryGetString(key: String) = {
     val
 }
 
-func isOwner(address: Address) = {
-    address == this
-}
+let mainContract = addressFromStringValue("3NCsqf4pFGtECs3vM4j1nKqL6VA3HdiNGeZ") # HERE TO SET MEMBERSHIP SMART CONTRACT ADDRESS
 
 func getGroup() = {
-    let val = match getString(this, "working_group_members") {
+    let val = match getString(mainContract, "working_group_members") {
         case b:String => b
         case _ => ""
     }
@@ -34,80 +32,38 @@ func getGroup() = {
 }
 
 func getMembers() = {
-    let val = match getString(this, "dao_members") {
+    let val = match getString(mainContract, "dao_members") {
         case b:String => b
         case _ => ""
     }
     val
 }
 
+func getDAOSize() = {
+    let val = match getInteger(mainContract, "dao_size") {
+        case b:Int => b
+        case _ => 0
+    }
+    val
+}
+
 func isGroupMember(a: Address) = {
     # Grants & Funding group membership check
-    tryGetInteger("working_group_member_"+a.toString()+"_weight") > 0
+    let val = match getInteger(mainContract, "working_group_member_"+a.toString()+"_weight") {
+        case b:Int => b
+        case _ => 0
+    }
+    val > 0
 }
 
 
 func canMemberVote(i: Invocation) = {
     # DAO membership check
-    tryGetInteger("dao_member_"+i.caller.toString()+"_weight") > 0
-}
-
-
-@Callable(i)
-func addDAOMember(memberAddress: String) = {
-    if (!isOwner(i.caller)) then {
-        throw("access only to the DAO owner")
-    } else {
-        if (tryGetInteger("dao_member_"+memberAddress+"_weight") == 1) then {
-            throw("This user already exists")
-        } else {
-            let group = getMembers()
-            let newGroup = group + ";" + memberAddress
-
-            let groupSize = tryGetInteger("dao_size")
-            let newGroupSize = groupSize + 1
-
-            WriteSet([
-                # Parsed in dAPP to dao.members -> list (separator ;)
-                DataEntry("dao_members", newGroup),
-
-                # Parsed in dAPP to dao.size
-                DataEntry("dao_size", newGroupSize),
-
-                # Parsed in dAPP to dao.member[id].weight
-                DataEntry("dao_member_"+memberAddress+"_weight", 1)
-            ])
-        }
+    let val = match getInteger(mainContract, "dao_member_"+i.caller.toString()+"_weight") {
+        case b:Int => b
+        case _ => 0
     }
-}
-
-
-@Callable(i)
-func addGroupMember(memberAddress: String) = {
-    if (!isOwner(i.caller)) then {
-        throw("access only to the DAO owner")
-    } else {
-        if (tryGetInteger("working_group_member_"+memberAddress+"_weight") == 1) then {
-            throw("This user already exists")
-        } else {
-            let group = getGroup()
-            let newGroup = group + ";" + memberAddress
-
-            let groupSize = tryGetInteger("working_group_size")
-            let newGroupSize = groupSize + 1
-
-            WriteSet([
-                # Parsed in dAPP to working.group.members -> list (separator ;)
-                DataEntry("working_group_members", newGroup),
-
-                # Parsed in dAPP to working.group.size
-                DataEntry("working_group_size", newGroupSize),
-
-                # Parsed in dAPP to working.group.member[id].weight
-                DataEntry("working_group_member_"+memberAddress+"_weight", 1)
-            ])
-        }
-    }
+    val > 0
 }
 
 
@@ -183,7 +139,7 @@ func voteForTaskProposal(taskId: String, voteValue: Int) = {
 
 @Callable(i)
 func finishTaskProposalVoting(taskId: String) = {
-    if ((tryGetInteger("tasks_"+taskId+"_voting_amount") * 100) / tryGetInteger("dao_size") < QUORUM) then {
+    if ((tryGetInteger("tasks_"+taskId+"_voting_amount") * 100) / getDAOSize() < QUORUM) then {
         throw("more than " + QUORUM.toString() + "% members have to vote before finishing the voting")
     } else {
         if (!(isGroupMember(i.caller))) then {
