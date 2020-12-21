@@ -101,15 +101,16 @@ func addTask(title: String, link: String) = {
 
 @Callable(i)
 func addTaskDetails(taskId: String, reward: Int) = {
-
-    # TODO Add a status check not equal to voting_started
-
-    if (i.caller.toString() != tryGetString("tasks_"+taskId+"_leader")) then {
-        throw("team leader only")
+    if (tryGetString("tasks_" + taskId + "_status") != "") then {
+        throw("voting was already started, so the reward amount cannot be changed")
     } else {
-      WriteSet([
-          DataEntry("tasks_"+taskId+"_reward", reward.toString())  # reward counted in WAVES
-      ])
+        if (i.caller.toString() != tryGetString("tasks_"+taskId+"_leader")) then {
+            throw("team leader only")
+        } else {
+        WriteSet([
+            DataEntry("tasks_"+taskId+"_reward", reward.toString())  # reward counted in WAVES
+        ])
+        }
     }
 }
 
