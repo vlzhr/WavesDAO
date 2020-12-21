@@ -23,10 +23,6 @@ func tryGetString(key: String) = {
 
 let mainContract = addressFromStringValue("3NCsqf4pFGtECs3vM4j1nKqL6VA3HdiNGeZ") # HERE TO SET MEMBERSHIP SMART CONTRACT ADDRESS
 
-func isOwner(address: Address) = {
-    address == this
-}
-
 func getGroup() = {
     let val = match getString(mainContract, "working_group_members") {
         case b:String => b
