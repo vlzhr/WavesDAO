@@ -86,13 +86,13 @@ func getVoteValue(s: String) = {
 }
 
 func initTaskVotingConditions(taskId: String, address: Address) = {
-    if ((!isGroupMember(address))) then {
+    if (!isGroupMember(address)) then {
         throw("grants working group access only")
 
-    # } else if (tryGetString("tasks_" + taskId + "_status") != "") then {
-    #     throw("task is not new")
+    } else if (tryGetString("tasks_" + taskId + "_status") != "") then {
+        throw("task is not new")
 
-    } else true   
+    } else true
 }
 
 func startWorkConditions(taskId: String, address: Address) = {
@@ -100,10 +100,10 @@ func startWorkConditions(taskId: String, address: Address) = {
     if (tryGetString("tasks_"+taskId+"_status") != "approved") then {
         throw("the task is not approved")
 
-    # Filter it's my grant 
+    # Filter it's my grant
     } else if (address.toString() != tryGetString("tasks_"+taskId+"_leader")) then {
         throw("team leader only")
-    
+
     } else true
 }
 
@@ -112,11 +112,11 @@ func addRewardConditions(taskId: String, reward: Int, address: Address) = {
     if (tryGetString("tasks_" + taskId + "_status") != "") then {
         throw("voting was already started, so the reward amount cannot be changed")
 
-    # Filter it's my grant    
+    # Filter it's my grant
     } else if (address.toString() != tryGetString("tasks_"+taskId+"_leader")) then {
         throw("team leader only")
-    
-    } else true 
+
+    } else true
 }
 
 func voteForTaskProposalConditions(taskId: String, i:Invocation) = {
@@ -124,14 +124,14 @@ func voteForTaskProposalConditions(taskId: String, i:Invocation) = {
     if (!canMemberVote(i)) then {
         throw("you can't vote")
 
-    # Filter voting is activated    
+    # Filter voting is activated
     } else if (isVotingDisable(taskId)) then {
         throw("voting is closed or not started")
-    
+
     # Filter you didn't vote
     } else if (!(tryGetInteger("tasks_"+taskId+"_voted_"+i.caller.toString()) == 0)) then {
         throw("you have already voted")
-    
+
     } else true
 }
 
@@ -139,15 +139,15 @@ func finishTaskProposalVotingConditions(taskId: String, address: Address) = {
     # Filter grant with status voting_started
     if (tryGetString("tasks_"+taskId+"_status") != "voting_started") then {
         throw("voting is not active")
-    
+
     # Filter quorum
     } else if (isQuorumAchieved(taskId)) then {
-        throw("more than " + QUORUM.toString() + "% members have to vote before finishing the voting")        
+        throw("more than " + QUORUM.toString() + "% members have to vote before finishing the voting")
 
-    # Filter working group member    
+    # Filter working group member
     } else if (!(isGroupMember(address))) then {
         throw("grants working group access only")
-        
+
     } else true
 }
 
@@ -184,7 +184,7 @@ func initTaskVoting(taskId: String) = {
     if (initTaskVotingConditions(taskId, i.caller)) then {
         WriteSet([
             DataEntry("tasks_"+taskId+"_status", "voting_started")
-        ]) 
+        ])
     } else throw("checks are not passed")
 }
 
@@ -204,7 +204,7 @@ func voteForTaskProposal(taskId: String, voteValueString: String) = {
             DataEntry(votingKey, votingState + voteValue),
             DataEntry(voteKey, voteValue),
             DataEntry(votesAmountKey, votesAmountState)
-        ])    
+        ])
     } else throw("checks are not passed")
 }
 
@@ -250,7 +250,7 @@ func acceptWorkResult(taskId: String, reportLink: String) = {
         ScriptResult(
             WriteSet([
                 DataEntry("tasks_"+taskId+"_status", "work_finished"),
-                # report is created by Working Group and stored into SC 
+                # report is created by Working Group and stored into SC
                 DataEntry("tasks_"+taskId+"_report", reportLink)
             ]),
             TransferSet([
