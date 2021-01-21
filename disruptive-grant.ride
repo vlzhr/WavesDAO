@@ -408,42 +408,21 @@ func voteForApplicant(taskId: String, teamIdentifier: String, voteValue: String)
 #   }
 # }
 @Callable(i)
-func finishApplicantsVoting(taskId: String) = {
-    func hasMoreVotes(aid: Int, aid2: Int) = {
-        let listKey = "tasks_"+taskId+"_applicants"
-        let applicantsList = getStringValue(this, listKey).split(";")
-        let teamIdentifier = applicantsList[aid]
-        let teamVotesAmountKey = "tasks_"+taskId+"_app_"+teamIdentifier+"_votes"
-        let teamVotesAmount = tryGetInteger(teamVotesAmountKey)
-
-        let team2Identifier = applicantsList[aid2]
-        let team2VotesAmountKey = "tasks_"+taskId+"_app_"+team2Identifier+"_votes"
-        let team2VotesAmount = tryGetInteger(team2VotesAmountKey)
-
-        if (teamVotesAmount > team2VotesAmount) then {
-            aid
-        } else {
-            aid2
-        }
-    }
-
+func finishApplicantsVoting(taskId: String, teamIdentifier: String) = {
     let listKeys = tryGetString("tasks_" + taskId + "_applicants")
     let applicantsList = listKeys.split(";")
 
     if (finishApplicantsVotingConditions(i.caller, taskId, applicantsList)) then {
-        let chosenTeamId = FOLD<2>([0,1], 0, hasMoreVotes)
+        WriteSet([
+            # Parsed in dAPP to tasks[id].status -> string
+            DataEntry("tasks_"+taskId+"_status", "team_chosen"),
 
-            let teamIdentifier = drop(applicantsList[chosenTeamId], 10)
-            WriteSet([
-                # Parsed in dAPP to tasks[id].status -> string
-                DataEntry("tasks_"+taskId+"_status", "team_chosen"),
+            # Parsed in dAPP to tasks[id].performer -> string
+            DataEntry("tasks_"+taskId+"_performer", teamIdentifier),
 
-                # Parsed in dAPP to tasks[id].performer -> string
-                DataEntry("tasks_"+taskId+"_performer", teamIdentifier),
-
-                # Parsed in dAPP to tasks[id].app[teamId].process -> string
-                DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_process", "can_begin")
-            ])
+            # Parsed in dAPP to tasks[id].app[teamId].process -> string
+            DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_process", "can_begin")
+        ])
     } else throw("checks are not passed")
 }
 
