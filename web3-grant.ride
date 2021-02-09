@@ -164,6 +164,7 @@ func addTask(title: String, link: String) = {
     WriteSet([
         DataEntry("tasks_" + i.transactionId.toBase58String() + "_title", title),
         DataEntry("tasks_" + i.transactionId.toBase58String() + "_link", link),
+        DataEntry("tasks_" + i.transactionId.toBase58String() + "_createdAt", lastBlock.timestamp),
         DataEntry("tasks_" + i.transactionId.toBase58String() + "_leader", i.caller.toString())
     ])
 }
