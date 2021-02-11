@@ -10,6 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
+        uses: actions/setup-checkoutv2
+      
+      - name: Connecting Python
         uses: actions/setup-python@v2
 
       - name: Installation
