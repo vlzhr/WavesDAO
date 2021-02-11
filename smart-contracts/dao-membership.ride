@@ -1,0 +1,103 @@
+{-# STDLIB_VERSION 3 #-}
+{-# CONTENT_TYPE DAPP #-}
+{-# SCRIPT_TYPE ACCOUNT #-}
+
+
+func tryGetInteger(key: String) = {
+    let val = match getInteger(this, key) {
+        case b:Int => b
+        case _ => 0
+    }
+    val
+}
+
+func tryGetString(key: String) = {
+    let val = match getString(this, key) {
+        case b:String => b
+        case _ => ""
+    }
+    val
+}
+
+func isOwner(address: Address) = {
+    address == this
+}
+
+func getGroup() = {
+    let val = match getString(this, "working_group_members") {
+        case b:String => b
+        case _ => ""
+    }
+    val
+}
+
+func getMembers() = {
+    let val = match getString(this, "dao_members") {
+        case b:String => b
+        case _ => ""
+    }
+    val
+}
+
+func isGroupMember(a: Address) = {
+    # Grants & Funding group membership check
+    tryGetInteger("working_group_member_"+a.toString()+"_weight") > 0
+}
+
+
+func canMemberVote(i: Invocation) = {
+    # DAO membership check
+    tryGetInteger("dao_member_"+i.caller.toString()+"_weight") > 0
+}
+
+
+@Callable(i)
+func addDAOMember(memberAddress: String) = {
+    if (!isOwner(i.caller)) then {
+        throw("access only to the DAO owner")
+    } else {
+        if (tryGetInteger("dao_member_"+memberAddress+"_weight") == 1) then {
+            throw("This user already exists")
+        } else {
+            let group = getMembers()
+            let newGroup = group + ";" + memberAddress
+
+            let groupSize = tryGetInteger("dao_size")
+            let newGroupSize = groupSize + 1
+
+            WriteSet([
+                DataEntry("dao_members", newGroup),
+                DataEntry("dao_size", newGroupSize),
+                DataEntry("dao_member_"+memberAddress+"_weight", 1)
+            ])
+        }
+    }
+}
+
+
+@Callable(i)
+func addGroupMember(memberAddress: String) = {
+    if (!isOwner(i.caller)) then {
+        throw("access only to the DAO owner")
+    } else {
+        if (tryGetInteger("working_group_member_"+memberAddress+"_weight") == 1) then {
+            throw("This user already exists")
+        } else {
+            let group = getGroup()
+            let newGroup = group + ";" + memberAddress
+
+            let groupSize = tryGetInteger("working_group_size")
+            let newGroupSize = groupSize + 1
+
+            WriteSet([
+                DataEntry("working_group_members", newGroup),
+                DataEntry("working_group_size", newGroupSize),
+                DataEntry("working_group_member_"+memberAddress+"_weight", 1)
+            ])
+        }
+    }
+}
+
+
+# @Verifier(tx)
+# func standardVerifier() = sigVerify(tx.bodyBytes, tx.proofs[0], tx.senderPublicKey)
