@@ -96,12 +96,12 @@ func addRewardConditions(address: Address, taskId: String) = {
 func voteForTaskProposalConditions(address: Address, taskId: String) = {
     if (!canMemberVote(address)) then {
         throw("you can't vote")
-    
+
     } else if (tryGetString("tasks_"+taskId+"_status") != "proposed") then {
         throw("voting is closed or not started")
-    
+
     } else if (tryGetInteger("tasks_"+taskId+"_voted_"+address.toString()) != 0) then {
-        throw("you have already voted") 
+        throw("you have already voted")
 
     } else true
 }
@@ -111,7 +111,7 @@ func finishTaskProposalVotingConditions(address: Address, taskId: String) = {
         throw("grants working group access only")
 
     } else if (tryGetString("tasks_"+taskId+"_status") != "proposed") then {
-        throw("voting is not active")       
+        throw("voting is not active")
 
     } else if ((tryGetInteger("tasks_"+taskId+"_voting_amount") * 100) / getDAOSize() < QUORUM) then {
         throw("more than " + QUORUM.toString() + "% members have to vote before finishing the voting")
@@ -121,10 +121,10 @@ func finishTaskProposalVotingConditions(address: Address, taskId: String) = {
 
 func applyForTaskConditions(address: Address, taskId: String, teamIdentifier: String) = {
     if (tryGetString("tasks_"+taskId+"_status") != "ready_to_apply") then {
-        throw("this grant has not yet been approved") 
+        throw("this grant has not yet been approved")
 
     } else if (tryGetString("tasks_"+taskId+"_app_"+teamIdentifier+"_leader") == address.toString()) then {
-        throw("you are applied") 
+        throw("you are applied")
 
     } else true
 }
@@ -135,7 +135,7 @@ func voteForApplicantConditions(address: Address, taskId: String, teamIdentifier
         throw("you can't vote")
 
     } else if (tryGetString("tasks_"+taskId+"_status") != "ready_to_apply") then {
-        throw("voting is not active")    
+        throw("voting is not active")
 
     } else if (tryGetInteger("tasks_"+taskId+"_vote_"+voteHash) != 0) then {
         throw("you have already voted on this team")
@@ -184,8 +184,7 @@ func addTask(title: String, link: String) = {
     if (addTaskConditions(i.caller)) then {
         WriteSet([
             DataEntry("tasks_" + i.transactionId.toBase58String() + "_title", title),
-            DataEntry("tasks_" + i.transactionId.toBase58String() + "_link", link),
-            DataEntry("tasks_" + i.transactionId.toBase58String() + "_createdAt", lastBlock.timestamp)
+            DataEntry("tasks_" + i.transactionId.toBase58String() + "_link", link)
         ])
     } else throw("checks are not passed")
 }
@@ -195,7 +194,7 @@ func addTask(title: String, link: String) = {
 # [taskId]: {
 #   title,
 #   link,
-#   reward   
+#   reward
 # }
 # transaction waves on address
 @Callable(i)
@@ -221,11 +220,11 @@ func addReward(taskId: String) = {
 #   reward,
 #   voting = {
 #      amount,
-#      state  
+#      state
 #   },
 #   voted = {
-#      [address] = undefined | 1  
-#   } 
+#      [address] = undefined | 1
+#   }
 # }
 @Callable(i)
 func voteForTaskProposal(taskId: String, voteValue: String) = {
@@ -239,8 +238,8 @@ func voteForTaskProposal(taskId: String, voteValue: String) = {
         # Parsed in dAPP to tasks[id].voting.amount -> integer
         let votesAmountKey = "tasks_"+taskId+"_voting_amount"
         let votesAmountState = tryGetInteger(votingKey) + 1
-        
-        let voteValueInt = getVoteValue(voteValue) 
+
+        let voteValueInt = getVoteValue(voteValue)
 
         let newVotingState = votingState + voteValueInt
         WriteSet([
@@ -259,11 +258,11 @@ func voteForTaskProposal(taskId: String, voteValue: String) = {
 #   reward,
 #   voting = {
 #      amount,
-#      state  
+#      state
 #   },
 #   voted = {
-#      [address] = undefined | 1  
-#   } 
+#      [address] = undefined | 1
+#   }
 # }
 @Callable(i)
 func finishTaskProposalVoting(taskId: String) = {
@@ -271,9 +270,9 @@ func finishTaskProposalVoting(taskId: String) = {
         let votingKey = "tasks_"+taskId+"_voting_state"
         WriteSet([
             # Parsed in dAPP to tasks[id].status -> string
-            DataEntry("tasks_" + taskId + "_status", 
-                if (tryGetInteger(votingKey) > 0) 
-                    then "ready_to_apply" 
+            DataEntry("tasks_" + taskId + "_status",
+                if (tryGetInteger(votingKey) > 0)
+                    then "ready_to_apply"
                     else "rejected"
             )
         ])
@@ -288,10 +287,10 @@ func finishTaskProposalVoting(taskId: String) = {
 #   reward,
 #   voting = {
 #       amount,
-#       state  
+#       state
 #   },
 #   voted = {
-#       [address] = undefined | 1  
+#       [address] = undefined | 1
 #   }
 #   applicants
 #   app = {
@@ -301,12 +300,12 @@ func finishTaskProposalVoting(taskId: String) = {
 #           leader,
 #           id
 #       }
-#   }  
+#   }
 # }
 @Callable(i)
 func applyForTask(taskId: String, teamName: String, link: String) = {
     let teamIdentifier = drop(i.caller.toString(), 10)
-    
+
     if (applyForTaskConditions(i.caller, taskId, teamIdentifier)) then {
         let listKey = "tasks_"+taskId+"_applicants"
         let currentApplicantsList = tryGetString(listKey)
@@ -338,10 +337,10 @@ func applyForTask(taskId: String, teamName: String, link: String) = {
 #   reward,
 #   voting = {
 #       amount,
-#       state  
+#       state
 #   },
 #   voted = {
-#       [address] = undefined | 1  
+#       [address] = undefined | 1
 #   }
 #   applicants
 #   app = {
@@ -350,19 +349,19 @@ func applyForTask(taskId: String, teamName: String, link: String) = {
 #           link,
 #           leader,
 #           id,
-#           score    
+#           score
 #       }
-#   }  
+#   }
 # }
 @Callable(i)
 func voteForApplicant(taskId: String, teamIdentifier: String, voteValue: String) = {
     if (voteForApplicantConditions(i.caller, taskId, teamIdentifier)) then {
-        
+
         let listKey = "tasks_"+taskId+"_app_"+teamIdentifier+"_voted"
         let newApplicantsList = tryGetString(listKey)+";"+i.caller.toString()
         let voteHash = drop(i.caller.toString(), 20) + teamIdentifier
         let voteKey = "tasks_"+taskId+"_vh_"+voteHash
-        
+
         if (tryGetString(voteKey) == i.caller.toString()) then {
             throw("you have already voted on this team")
         } else {
@@ -390,10 +389,10 @@ func voteForApplicant(taskId: String, teamIdentifier: String, voteValue: String)
 #   reward,
 #   voting = {
 #       amount,
-#       state  
+#       state
 #   },
 #   voted = {
-#       [address] = undefined | 1  
+#       [address] = undefined | 1
 #   }
 #>  performer
 #   applicants
@@ -404,47 +403,26 @@ func voteForApplicant(taskId: String, teamIdentifier: String, voteValue: String)
 #           leader,
 #           id,
 #           score,
-#>          process = can_begin        
+#>          process = can_begin
 #       }
-#   }  
+#   }
 # }
 @Callable(i)
-func finishApplicantsVoting(taskId: String) = {
-    func hasMoreScore(aid: Int, aid2: Int) = {
-        let listKey = "tasks_"+taskId+"_applicants"
-        let applicantsList = getStringValue(this, listKey).split(";")
-        let teamIdentifier = drop(applicantsList[aid], 10)
-        let teamVotesScoreKey = "tasks_"+taskId+"_app_"+teamIdentifier+"_score"
-        let teamVotesScore = tryGetInteger(teamVotesScoreKey)
-
-        let team2Identifier = drop(applicantsList[aid2], 10)
-        let team2VotesScoreKey = "tasks_"+taskId+"_app_"+team2Identifier+"_score"
-        let team2VotesScore = tryGetInteger(team2VotesScoreKey)
-
-        if (teamVotesScore > team2VotesScore) then {
-            aid
-        } else {
-            aid2
-        }
-    }
-
+func finishApplicantsVoting(taskId: String, teamIdentifier: String) = {
     let listKeys = tryGetString("tasks_" + taskId + "_applicants")
     let applicantsList = listKeys.split(";")
 
     if (finishApplicantsVotingConditions(i.caller, taskId, applicantsList)) then {
-        let chosenTeamId = FOLD<2>([0,1], 0, hasMoreScore)
+        WriteSet([
+            # Parsed in dAPP to tasks[id].status -> string
+            DataEntry("tasks_"+taskId+"_status", "team_chosen"),
 
-            let teamIdentifier = drop(applicantsList[chosenTeamId], 10)
-            WriteSet([
-                # Parsed in dAPP to tasks[id].status -> string
-                DataEntry("tasks_"+taskId+"_status", "team_chosen"),
+            # Parsed in dAPP to tasks[id].performer -> string
+            DataEntry("tasks_"+taskId+"_performer", teamIdentifier),
 
-                # Parsed in dAPP to tasks[id].performer -> string
-                DataEntry("tasks_"+taskId+"_performer", teamIdentifier),
-
-                # Parsed in dAPP to tasks[id].app[teamId].process -> string
-                DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_process", "can_begin")
-            ])
+            # Parsed in dAPP to tasks[id].app[teamId].process -> string
+            DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_process", "can_begin")
+        ])
     } else throw("checks are not passed")
 }
 
@@ -456,10 +434,10 @@ func finishApplicantsVoting(taskId: String) = {
 #   reward,
 #   voting = {
 #       amount,
-#       state  
+#       state
 #   },
 #   voted = {
-#       [address] = undefined | 1  
+#       [address] = undefined | 1
 #   }
 #   applicants
 #   app = {
@@ -469,9 +447,9 @@ func finishApplicantsVoting(taskId: String) = {
 #           leader,
 #           id,
 #           score,
-#>          process = work_started        
+#>          process = work_started
 #       }
-#   }  
+#   }
 # }
 @Callable(i)
 func startWork(taskId: String) = {
@@ -496,10 +474,10 @@ func startWork(taskId: String) = {
 #   reward,
 #   voting = {
 #       amount,
-#       state  
+#       state
 #   },
 #   voted = {
-#       [address] = undefined | 1  
+#       [address] = undefined | 1
 #   }
 #   applicants
 #   app = {
@@ -534,7 +512,7 @@ func acceptWorkResult(taskId: String, reportLink: String) = {
             TransferSet([
                 ScriptTransfer(teamAddress.addressFromStringValue(), rewardAmount, unit)
             ])
-        )        
+        )
     } else throw("checks are not passed")
 }
 
