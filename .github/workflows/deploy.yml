@@ -10,12 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/setup-python@v2
 
       - name: Installation
-        run: |
-          sudo apt-get install python3.8 &&
-          pip3 install pywaves
+        run: pip install pywaves
 
       - name: Run script
         run: python3 dao_deploy.py dao_deploy $SEED
