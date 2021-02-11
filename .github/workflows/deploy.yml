@@ -1,0 +1,19 @@
+name: Deploy your DAO
+
+on: push
+
+env:
+  SEED: ${{ secrets.SEED }}
+
+jobs:
+  create:
+    runs-on: ubuntu-latest
+    steps:
+      name: Checkout
+      uses: actions/checkout@v2
+
+      name: Installation
+      run: sudo apt-get install python3.8
+
+      name: Run script
+      run: python3 dao_deploy.py dao_deploy $SEED
