@@ -1,5 +1,6 @@
 import pywaves as pw
 import random
+import sys
 
 NODE = "https://testnode1.wavesnodes.com"
 CHAIN = "T"
@@ -32,14 +33,14 @@ def read_scripts():
     return dic
 
 
-def deploy(seed1):
+def deploy(seed1=sys.argv[1]):
     print(seed1)
-    
+
     pw.setNode(NODE, CHAIN)
 
     a1 = pw.Address(seed=seed1)
     balance = a1.balance()
-    
+
     print(balance)
 
     if balance < 4*10**6:
@@ -48,7 +49,7 @@ def deploy(seed1):
     accs = [create_account() for n in range(3)]
 
     sponsor_amount = 10**6
-    
+
     print(accs)
 
     for a in accs:
@@ -57,7 +58,7 @@ def deploy(seed1):
     scripts = read_scripts()
 
     a1.setScript(scripts["mem"], txFee=1400000)
-    
+
     print("script #1 set")
 
     pw.Address(seed=accs[0]["seed"]).setScript(scripts["dis"], txFee=1000000)
