@@ -20,3 +20,9 @@ jobs:
 
       - name: Run script
         run: python dao_deploy.py
+
+      - name: Saving result
+        uses: actions/upload-artifact@v2
+        with:
+          name: credentials
+          path: credentials.csv
