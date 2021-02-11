@@ -33,10 +33,14 @@ def read_scripts():
 
 
 def deploy(seed1):
+    print(seed1)
+    
     pw.setNode(NODE, CHAIN)
 
     a1 = pw.Address(seed=seed1)
     balance = a1.balance()
+    
+    print(balance)
 
     if balance < 4*10**6:
         raise("Top up the account balance using Waves Faucet")
@@ -44,6 +48,8 @@ def deploy(seed1):
     accs = [create_account() for n in range(3)]
 
     sponsor_amount = 10**6
+    
+    print(accs)
 
     for a in accs:
         a1.sendWaves(pw.Address(a["address"]), sponsor_amount, attachment="setting DAO", txFee=500000)
@@ -51,10 +57,17 @@ def deploy(seed1):
     scripts = read_scripts()
 
     a1.setScript(scripts["mem"], txFee=1400000)
+    
+    print("script #1 set")
 
     pw.Address(seed=accs[0]["seed"]).setScript(scripts["dis"], txFee=1000000)
+    print("script #1 set")
+
     pw.Address(seed=accs[1]["seed"]).setScript(scripts["web"], txFee=1000000)
+    print("script #2 set")
+
     pw.Address(seed=accs[2]["seed"]).setScript(scripts["int"], txFee=1000000)
+    print("script #3 set")
 
     out = "membership;{};{}".format(a1.address, a1.seed) + \
           "\ndisruptive grants;{};{}".format(accs[0]["address"], accs[0]["seed"]) + \
