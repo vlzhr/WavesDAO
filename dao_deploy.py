@@ -1,6 +1,6 @@
 import pywaves as pw
 import random
-import sys
+import os
 
 NODE = "https://testnode1.wavesnodes.com"
 CHAIN = "T"
@@ -33,7 +33,7 @@ def read_scripts():
     return dic
 
 
-def deploy(seed1=sys.argv[1]):
+def deploy(seed1):
     print(seed1)
 
     pw.setNode(NODE, CHAIN)
@@ -81,5 +81,13 @@ def deploy(seed1=sys.argv[1]):
     print(out)
 
 
+def main():
+    deploy(os.environ["SEED"])
+
+
 seed1 = "debate gravity oppose deposit turtle proud eye alley absurd bachelor coil excess dignity dune depart"
+
+
+if __name__ == "__main__":
+    main()
 
