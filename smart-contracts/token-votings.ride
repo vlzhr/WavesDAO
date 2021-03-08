@@ -1,0 +1,211 @@
+{-# STDLIB_VERSION 3 #-}
+{-# CONTENT_TYPE DAPP #-}
+{-# SCRIPT_TYPE ACCOUNT #-}
+
+let mainContract = addressFromStringValue("3N97iacRapbKQMwDxobcwAvNk8WSb3TPwjx") # HERE TO SET MEMBERSHIP SMART CONTRACT ADDRESS
+
+let QUORUM = 1  # 50% votes needed
+
+func tryGetInteger(key: String) = {
+    let val = match getInteger(this, key) {
+        case b:Int => b
+        case _ => 0
+    }
+    val
+}
+
+func tryGetString(key: String) = {
+    let val = match getString(this, key) {
+        case b:String => b
+        case _ => ""
+    }
+    val
+}
+
+func isOwner(address: Address) = {
+    address == this
+}
+
+func getGroup() = {
+    let val = match getString(mainContract, "working_group_members") {
+        case b:String => b
+        case _ => ""
+    }
+    val
+}
+
+func getMembers() = {
+    let val = match getString(mainContract, "dao_members") {
+        case b:String => b
+        case _ => ""
+    }
+    val
+}
+
+func getDAOSize() = {
+    let val = match getInteger(mainContract, "dao_size") {
+        case b:Int => b
+        case _ => 0
+    }
+    val
+}
+
+func isGroupMember(a: Address) = {
+    # Grants & Funding group membership check
+    let val = match getInteger(mainContract, "working_group_member_"+a.toString()+"_weight") {
+        case b:Int => b
+        case _ => 0
+    }
+    val > 0
+}
+
+
+func canMemberVote(address: Address) = {
+    let val = match getInteger(mainContract, "dao_member_"+address.toString()+"_weight") {
+        case b:Int => b
+        case _ => 0
+    }
+    val > 0
+}
+
+func getVoteValue(s: String) = {
+    if (s == "like") then {
+        1
+    } else if (s == "dislike") then {
+        -1
+    } else throw("you need to vote with 'like' or 'dislike' value")
+}
+
+func addTaskConditions(address: Address) = {
+    if (!(isGroupMember(address))) then {
+        throw("grants working group access only")
+
+    } else true
+}
+
+func addRewardConditions(address: Address, taskId: String) = {
+    if (!(isGroupMember(address))) then {
+        throw("grants working group access only")
+
+    } else if (tryGetString("tasks_"+taskId+"_status") != "") then {
+        throw("grant isn`t new")
+
+    } else true
+}
+
+func voteForTaskProposalConditions(address: Address, taskId: String) = {
+    if (!canMemberVote(address)) then {
+        throw("you can't vote")
+
+    } else if (tryGetString("tasks_"+taskId+"_status") != "proposed") then {
+        throw("voting is closed or not started")
+
+    } else if (tryGetInteger("tasks_"+taskId+"_voted_"+address.toString()) != 0) then {
+        throw("you have already voted")
+
+    } else true
+}
+
+func finishTaskProposalVotingConditions(address: Address, taskId: String) = {
+    if (!(isGroupMember(address))) then {
+        throw("grants working group access only")
+
+    } else if (tryGetString("tasks_"+taskId+"_status") != "proposed") then {
+        throw("voting is not active")
+
+    } else if ((tryGetInteger("tasks_"+taskId+"_voting_amount") * 100) / getDAOSize() < QUORUM) then {
+        throw("more than " + QUORUM.toString() + "% members have to vote before finishing the voting")
+
+    } else true
+}
+
+
+@Callable(i)
+func initContract() = {
+  WriteSet([
+      DataEntry("data_provider_description_<en>", "Waves Association DAO"),
+      DataEntry("data_provider_email", "grants@wavesassociation.org"),
+      DataEntry("data_provider_lang_list", "en"),
+      DataEntry("data_provider_link", "https://dao.wavesassociation.org"),
+      DataEntry("data_provider_name", "Waves Association DAO"),
+      DataEntry("data_provider_version", 0),
+      DataEntry("inited", true)
+  ])
+}
+
+
+@Callable(i)
+func addProposal(tokenId: String, description: String, email: String, link: String, logo: String, ticker: String) = {
+    if (addTaskConditions(i.caller)) then {
+        WriteSet([
+            DataEntry("description_<en>_<" + tokenId + ">", description),
+            DataEntry("email_<" + tokenId + ">", email),
+            DataEntry("logo_<" + tokenId + ">", tokenId),
+            DataEntry("ticker_<" + tokenId + ">", ticker),
+            DataEntry("link_<" + tokenId + ">", link),
+            DataEntry("version_<" + tokenId + ">", 0),
+            DataEntry("status_<" + tokenId + ">", 0),
+            DataEntry("tasks_" + tokenId + "_status", "proposed")
+        ])
+    } else throw("checks are not passed")
+}
+
+
+@Callable(i)
+func voteForTaskProposal(taskId: String, voteValue: String) = {
+    if (voteForTaskProposalConditions(i.caller, taskId)) then {
+        let voteKey = "tasks_"+taskId+"_voted_"+i.caller.toString()
+
+        # Parsed in dAPP to tasks[id].voting.state -> integer
+        let votingKey = "tasks_"+taskId+"_voting_state"
+        let votingState = tryGetInteger(votingKey)
+
+        # Parsed in dAPP to tasks[id].voting.amount -> integer
+        let votesAmountKey = "tasks_"+taskId+"_voting_amount"
+        let votesAmountState = tryGetInteger(votingKey) + 1
+
+        let voteValueInt = getVoteValue(voteValue)
+
+        let newVotingState = votingState + voteValueInt
+        WriteSet([
+            DataEntry(votingKey, newVotingState),
+            DataEntry(voteKey, voteValueInt),
+            DataEntry(votesAmountKey, votesAmountState)
+        ])
+    } else throw("checks are not passed")
+}
+
+
+@Callable(i)
+func finishTaskProposalVoting(taskId: String) = {
+    if (finishTaskProposalVotingConditions(i.caller, taskId)) then {
+        let votingKey = "tasks_"+taskId+"_voting_state"
+        WriteSet([
+            DataEntry("tasks_" + taskId + "_status",
+                if (tryGetInteger(votingKey) > 0)
+                    then "approved"
+                    else "rejected"
+            ),
+            DataEntry("status_<" + taskId + ">",
+                if (tryGetInteger(votingKey) > 0)
+                    then 2
+                    else 0
+            )
+        ])
+    } else throw("checks are not passed")
+}
+
+
+@Callable(i)
+func rejectTask(taskId: String) = {
+    # called by Working Group Member to undo the task
+    # only in extraordinary cases
+    if (isGroupMember(i.caller)) then {
+        WriteSet([
+            DataEntry("tasks_"+taskId+"_status", "rejected")
+        ])
+    } else throw("grants working group access only")
+}
+
+# @Verifier(tx)
+# func standardVerifier() = sigVerify(tx.bodyBytes, tx.proofs[0], tx.senderPublicKey)
