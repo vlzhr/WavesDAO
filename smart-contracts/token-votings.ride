@@ -152,7 +152,6 @@ func addProposal(tokenId: String, description: String, email: String, link: Stri
             DataEntry("version_<" + tokenId + ">", 0),
             DataEntry("status_<" + tokenId + ">", 0),
             DataEntry("tasks_" + tokenId + "_status", "proposed")
-            DataEntry("tasks_" + tokenId + "_status", "proposed")
         ])
     } else throw("checks are not passed")
     if (mdHashConditions(mdHash)) then {
