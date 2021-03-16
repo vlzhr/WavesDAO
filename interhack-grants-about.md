@@ -1,10 +1,6 @@
 # Interhack Grants
 
-Interhack Grants awarded for building innovative solutions in accordance with assignments provided by the Waves Association.
-
-These grants are as close as possible to the usual hackathon format. The Association puts forward an idea and a proposed a reward, and user teams compete in implementation after being selected as a candidate 
-
-*The Workflow*
+*Workflow*
 
 1. **WG:** proposes task *(addTask)*
 2. **WG:** adds task description and reward amount *(addTaskDetails)*
@@ -18,10 +14,3 @@ These grants are as close as possible to the usual hackathon format. The Associa
 10. **WG:** stops accepting submissions *(stopSubmissions)*
 11. **JURY:** votes on solutions *(voteForSolution)*
 12. **WG:** accepts the best solution and pays a reward *(acceptWorkResult)*
-
-**Abbreviations:**<br>
-PE - Performer <br>
-WG - Working Group <br>
-DM - DAO Member
-
-![alt text](./assets/diagrams/diagram_interhack_2x.png)
