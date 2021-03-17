@@ -1,5 +1,7 @@
 import pywaves as pw
 import random
+import os
+import re
 
 NODE = "https://testnode1.wavesnodes.com"
 CHAIN = "T"
@@ -15,7 +17,21 @@ def create_account():
     }
 
 
-def read_scripts():
+def set_membership_address(script_text, address):
+    li = script_text.split("\n")
+    new_li = []
+    set_address_line = 'let mainContract = addressFromStringValue("'+address+'") # HERE TO SET MEMBERSHIP SMART CONTRACT ADDRESS'
+
+    for line in li:
+        if not "# HERE TO SET MEMBERSHIP SMART CONTRACT ADDRESS" in line:
+            new_li.append(line)
+        else:
+            new_li.append(set_address_line)
+
+    return ("\n").join(new_li)
+
+
+def read_scripts(membership_address=""):
     dic = {
         "mem": "dao-membership.ride",
         "dis": "disruptive-grant.ride",
@@ -27,16 +43,20 @@ def read_scripts():
 
     for k in keys:
         with open("smart-contracts/"+dic[k], encoding="utf-8") as f:
-            dic[k] = f.read()
+            dic[k] = set_membership_address(f.read(), membership_address)
 
     return dic
 
 
 def deploy(seed1):
+    print(seed1)
+
     pw.setNode(NODE, CHAIN)
 
     a1 = pw.Address(seed=seed1)
     balance = a1.balance()
+
+    print(balance)
 
     if balance < 4*10**6:
         raise("Top up the account balance using Waves Faucet")
@@ -45,16 +65,25 @@ def deploy(seed1):
 
     sponsor_amount = 10**6
 
+    print(accs)
+
     for a in accs:
         a1.sendWaves(pw.Address(a["address"]), sponsor_amount, attachment="setting DAO", txFee=500000)
 
-    scripts = read_scripts()
+    scripts = read_scripts(a1.address)
 
     a1.setScript(scripts["mem"], txFee=1400000)
 
+    print("script #1 set")
+
     pw.Address(seed=accs[0]["seed"]).setScript(scripts["dis"], txFee=1000000)
+    print("script #1 set")
+
     pw.Address(seed=accs[1]["seed"]).setScript(scripts["web"], txFee=1000000)
+    print("script #2 set")
+
     pw.Address(seed=accs[2]["seed"]).setScript(scripts["int"], txFee=1000000)
+    print("script #3 set")
 
     out = "membership;{};{}".format(a1.address, a1.seed) + \
           "\ndisruptive grants;{};{}".format(accs[0]["address"], accs[0]["seed"]) + \
@@ -67,5 +96,13 @@ def deploy(seed1):
     print(out)
 
 
-seed1 = "debate gravity oppose deposit turtle proud eye alley absurd bachelor coil excess dignity dune depart"
+def main():
+    deploy(os.environ["SEED"])
+
+
+seed1 = "chair hint artefact crumble improve note select myth case expire govern slam wedding hour manage"
+
+
+if __name__ == "__main__":
+    main()
 
