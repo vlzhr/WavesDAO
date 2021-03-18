@@ -160,11 +160,14 @@ func acceptWorkResultConditions(address: Address) = {
 
 
 @Callable(i)
-func addTask(title: String, link: String) = {
+func addTask(title: String, link: String, hash: String) = {
     WriteSet([
         DataEntry("tasks_" + i.transactionId.toBase58String() + "_title", title),
         DataEntry("tasks_" + i.transactionId.toBase58String() + "_link", link),
+        # Hash for link validation
+        DataEntry("tasks_" + i.transactionId.toBase58String() + "_hash", hash),
         DataEntry("tasks_" + i.transactionId.toBase58String() + "_leader", i.caller.toString())
+
     ])
 }
 

@@ -234,13 +234,16 @@ func voteForSolutionConditions(address: Address, taskId: String) = {
 # [taskId]: {
 #   title,
 #   link
+#   hash
 # }
 @Callable(i)
-func addTask(title: String, link: String) = {
+func addTask(title: String, link: String, hash: String) = {
     if (addTaskConditions(i.caller)) then {
         WriteSet([
             DataEntry("tasks_" + i.transactionId.toBase58String() + "_title", title),
-            DataEntry("tasks_" + i.transactionId.toBase58String() + "_link", link)
+            DataEntry("tasks_" + i.transactionId.toBase58String() + "_link", link),
+            # Hash for link validation
+            DataEntry("tasks_"+i.transactionId.toBase58String()+"_hash", hash)
         ])
     } else throw("checks are not passed")
 }
@@ -354,12 +357,13 @@ func finishTaskProposalVoting(taskId: String) = {
 #           name,
 #           link,
 #           leader,
-#           id
+#           id,
+#           hash
 #       }
 #   }
 # }
 @Callable(i)
-func applyForTask(taskId: String, teamName: String, link: String) = {
+func applyForTask(taskId: String, teamName: String, link: String, hash: String) = {
     let teamIdentifier = drop(i.caller.toString(), 10)
 
     if (applyForTaskConditions(i.caller, taskId, teamIdentifier)) then {
@@ -372,12 +376,15 @@ func applyForTask(taskId: String, teamName: String, link: String) = {
             # Parsed in dAPP to tasks[id].app[id].name -> string
             DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_name", teamName),
             DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_link", link),
-
+            # Hash for link validation
+            DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_hash", hash),
             # Parsed in dAPP to tasks[id].app[id].leader -> id
             DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_leader", i.caller.toString()),
 
             # Parsed in dAPP to tasks[id].app[id].id -> key
             DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_id", teamIdentifier),
+
+
 
             # Parsed in dAPP to tasks[id].apps -> list id (separator ;)
             DataEntry(listKey, newApplicantsList)
@@ -588,13 +595,15 @@ func enableSubmissions(taskId: String, juryList: String) = {
 #   jury
 # }
 @Callable(i)
-func submitSolution(taskId: String, solutionLink: String) = {
+func submitSolution(taskId: String, solutionLink: String, hash: String) = {
     let teamIdentifier = drop(i.caller.toString(), 10)
 
     if (submitSolutionConditions(i.caller, taskId, teamIdentifier)) then {
         WriteSet([
             DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_process", "work_submitted"),
-            DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_solution", solutionLink)
+            DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_solution", solutionLink),
+            # Hash for link validation
+            DataEntry("tasks_"+taskId+"_app_"+teamIdentifier+"_hash", hash)
         ])
     } else throw("checks are not passed")
 }
