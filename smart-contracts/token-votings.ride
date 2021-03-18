@@ -119,13 +119,6 @@ func finishTaskProposalVotingConditions(address: Address, taskId: String) = {
     } else true
 }
 
-func mdHashConditions(mdHash: String) = {
-    if (tryGetInteger(mdHash.toString()) != 0) then {
-        throw("hash length not suitable")
-
-    } else true
-}
-
 @Callable(i)
 func initContract() = {
   WriteSet([
@@ -141,7 +134,7 @@ func initContract() = {
 
 
 @Callable(i)
-func addProposal(tokenId: String, description: String, email: String, link: String, logo: String, ticker: String, mdHash: String) = {
+func addProposal(tokenId: String, description: String, email: String, link: String, logo: String, ticker: String, hash: String) = {
     if (addTaskConditions(i.caller)) then {
         WriteSet([
             DataEntry("description_<en>_<" + tokenId + ">", description),
@@ -149,14 +142,13 @@ func addProposal(tokenId: String, description: String, email: String, link: Stri
             DataEntry("logo_<" + tokenId + ">", logo),
             DataEntry("ticker_<" + tokenId + ">", ticker),
             DataEntry("link_<" + tokenId + ">", link),
+            # Hash for link validation
+            DataEntry("tasks_" + tokenId + "_hash", hash),
             DataEntry("version_<" + tokenId + ">", 0),
             DataEntry("status_<" + tokenId + ">", 0),
             DataEntry("tasks_" + tokenId + "_status", "proposed")
         ])
     } else throw("checks are not passed")
-    if (mdHashConditions(mdHash)) then {
-        DataEntry("tasks_" + tokenId + "_mdHash", mdHash)
-    }
 }
 
 
