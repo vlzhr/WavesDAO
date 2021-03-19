@@ -14,4 +14,4 @@ Integrated with Waves.Exchange service. This smart contract verifies new tokens 
 WG - Working Group <br>
 DM - DAO Member
 
-![alt text](./assets/diagrams/diagram_votings_2x.png)
+![alt text](https://raw.githubusercontent.com/vlzhr/WavesDAO/master/assets/diagrams/diagram_votings_2x.png)

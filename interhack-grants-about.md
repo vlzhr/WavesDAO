@@ -24,4 +24,4 @@ PE - Performer <br>
 WG - Working Group <br>
 DM - DAO Member
 
-![alt text](./assets/diagrams/diagram_interhack_2x.png)
+![alt text](https://raw.githubusercontent.com/vlzhr/WavesDAO/master/assets/diagrams/diagram_interhack_2x.png)
