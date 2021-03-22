@@ -192,6 +192,20 @@ func addTask(title: String, link: String, hash: String) = {
     } else throw("checks are not passed")
 }
 
+@Callable(i)
+func resetHash(taskId: String, hash: String) = {
+    WriteSet([
+        # Hash for link validation
+        DataEntry("tasks_"+taskId+"_hash", hash)
+    ])
+}
+
+@Callable(i)
+func hideTask(taskId: String) = {
+    WriteSet([
+        DataEntry("tasks_" + taskId + "_status", "hide")
+    ])
+}
 
 # Set status -> proposed
 # [taskId]: {
