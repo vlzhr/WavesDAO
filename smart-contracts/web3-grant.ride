@@ -173,6 +173,21 @@ func addTask(title: String, link: String, hash: String) = {
 
 
 @Callable(i)
+func resetHash(taskId: String, hash: String) = {
+    WriteSet([
+        # Hash for link validation
+        DataEntry("tasks_"+taskId+"_hash", hash)
+    ])
+}
+
+@Callable(i)
+func hideTask(taskId: String) = {
+    WriteSet([
+        DataEntry("tasks_" + taskId + "_status", "hide")
+    ])
+}
+
+@Callable(i)
 func addReward(taskId: String, reward: Int) = {
     if (addRewardConditions(taskId, reward, i.caller)) then {
         WriteSet([

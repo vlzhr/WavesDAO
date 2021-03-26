@@ -2,6 +2,7 @@ import pywaves as pw
 import random
 import os
 import re
+import sys
 
 NODE = "https://testnode1.wavesnodes.com"
 CHAIN = "T"
@@ -20,6 +21,8 @@ def create_account():
 def set_membership_address(script_text, address):
     li = script_text.split("\n")
     new_li = []
+    set_address_line = 'let mainContract = addressFromStringValue("' + \
+        address+'") # HERE TO SET MEMBERSHIP SMART CONTRACT ADDRESS'
     set_address_line = 'let mainContract = addressFromStringValue("'+address+'") # HERE TO SET MEMBERSHIP SMART CONTRACT ADDRESS'
 
     for line in li:
@@ -68,7 +71,8 @@ def deploy(seed1):
     print(accs)
 
     for a in accs:
-        a1.sendWaves(pw.Address(a["address"]), sponsor_amount, attachment="setting DAO", txFee=500000)
+        a1.sendWaves(pw.Address(a["address"]), sponsor_amount,
+                     attachment="setting DAO", txFee=500000)
 
     scripts = read_scripts(a1.address)
 
@@ -88,7 +92,8 @@ def deploy(seed1):
     out = "membership;{};{}".format(a1.address, a1.seed) + \
           "\ndisruptive grants;{};{}".format(accs[0]["address"], accs[0]["seed"]) + \
           "\nweb 3.0 grants;{};{}".format(accs[1]["address"], accs[1]["seed"]) + \
-          "\ninterhack grants;{};{}".format(accs[2]["address"], accs[2]["seed"])
+          "\ninterhack grants;{};{}".format(
+              accs[2]["address"], accs[2]["seed"])
 
     with open("credentials.csv", "w", encoding="utf-8") as f:
         f.write(out)
@@ -102,7 +107,5 @@ def main():
 
 seed1 = "chair hint artefact crumble improve note select myth case expire govern slam wedding hour manage"
 
-
 if __name__ == "__main__":
     main()
-
