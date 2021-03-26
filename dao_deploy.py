@@ -23,6 +23,7 @@ def set_membership_address(script_text, address):
     new_li = []
     set_address_line = 'let mainContract = addressFromStringValue("' + \
         address+'") # HERE TO SET MEMBERSHIP SMART CONTRACT ADDRESS'
+    set_address_line = 'let mainContract = addressFromStringValue("'+address+'") # HERE TO SET MEMBERSHIP SMART CONTRACT ADDRESS'
 
     for line in li:
         if not "# HERE TO SET MEMBERSHIP SMART CONTRACT ADDRESS" in line:
@@ -101,12 +102,10 @@ def deploy(seed1):
 
 
 def main():
-    # deploy(os.environ["SEED"])
-    deploy(sys.argv[1])
+    deploy(os.environ["SEED"])
 
 
 seed1 = "chair hint artefact crumble improve note select myth case expire govern slam wedding hour manage"
-
 
 if __name__ == "__main__":
     main()

@@ -139,7 +139,7 @@ func addProposal(tokenId: String, description: String, email: String, link: Stri
         WriteSet([
             DataEntry("description_<en>_<" + tokenId + ">", description),
             DataEntry("email_<" + tokenId + ">", email),
-            DataEntry("logo_<" + tokenId + ">", tokenId),
+            DataEntry("logo_<" + tokenId + ">", logo),
             DataEntry("ticker_<" + tokenId + ">", ticker),
             DataEntry("link_<" + tokenId + ">", link),
             # Hash for link validation

@@ -1,6 +1,10 @@
 # Web 3.0 Development Grants
 
-**Workflow**
+Web 3.0 Development Grants can be proposed by the community and awarded to the teams that foster mass adoption of blockchain technology. 
+
+Usually this is a decentralized application or startup.  
+
+**The Workflow**
 
 1. **PE:** proposes solution *(addTask)*
 2. **PE:** adds solution description and requested reward amount *(addTaskDetails)*
@@ -10,3 +14,10 @@
 6. **PE:** starts work on the bounty *(startWork)*
 7. **PE** & **WG**: off-chain communication
 8. **WG:** accepts a solution and pays a reward *(acceptWorkResult)*
+
+**Abbreviations:**<br>
+PE - Performer <br>
+WG - Working Group <br>
+DM - DAO Member
+
+![alt text](https://raw.githubusercontent.com/vlzhr/WavesDAO/master/assets/diagrams/diagram_web3_2x.png)
