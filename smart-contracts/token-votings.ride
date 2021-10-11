@@ -170,16 +170,17 @@ func hideTask(taskId: String) = {
 func voteForTaskProposal(taskId: String, voteValue: String) = {
     if (voteForTaskProposalConditions(i.caller, taskId)) then {
         let voteKey = "tasks_"+taskId+"_voted_"+i.caller.toString()
-
+        let voteValueInt = getVoteValue(voteValue)
+        
         # Parsed in dAPP to tasks[id].voting.state -> integer
         let votingKey = "tasks_"+taskId+"_voting_state"
         let votingState = tryGetInteger(votingKey)
 
         # Parsed in dAPP to tasks[id].voting.amount -> integer
         let votesAmountKey = "tasks_"+taskId+"_voting_amount"
-        let votesAmountState = tryGetInteger(votingKey) + 1
+        let votesAmountState = tryGetInteger(votesAmountKey) + 1
 
-        let voteValueInt = getVoteValue(voteValue)
+        
 
         let newVotingState = votingState + voteValueInt
         WriteSet([
