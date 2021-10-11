@@ -1,4 +1,4 @@
-{-# STDLIB_VERSION 3 #-}
+{-# STDLIB_VERSION 5 #-}
 {-# CONTENT_TYPE DAPP #-}
 {-# SCRIPT_TYPE ACCOUNT #-}
 
@@ -121,49 +121,49 @@ func finishTaskProposalVotingConditions(address: Address, taskId: String) = {
 
 @Callable(i)
 func initContract() = {
-  WriteSet([
-      DataEntry("data_provider_description_<en>", "Waves Association DAO"),
-      DataEntry("data_provider_email", "grants@wavesassociation.org"),
-      DataEntry("data_provider_lang_list", "en"),
-      DataEntry("data_provider_link", "https://dao.wavesassociation.org"),
-      DataEntry("data_provider_name", "Waves Association DAO"),
-      DataEntry("data_provider_version", 0),
-      DataEntry("inited", true)
-  ])
+  [
+      StringEntry("data_provider_description_<en>", "Waves Association DAO"),
+      StringEntry("data_provider_email", "grants@wavesassociation.org"),
+      StringEntry("data_provider_lang_list", "en"),
+      StringEntry("data_provider_link", "https://dao.wavesassociation.org"),
+      StringEntry("data_provider_name", "Waves Association DAO"),
+      IntegerEntry("data_provider_version", 0),
+      BooleanEntry("inited", true)
+  ]
 }
 
 
 @Callable(i)
 func addProposal(tokenId: String, description: String, email: String, link: String, logo: String, ticker: String, hash: String) = {
     if (addTaskConditions(i.caller)) then {
-        WriteSet([
-            DataEntry("description_<en>_<" + tokenId + ">", description),
-            DataEntry("email_<" + tokenId + ">", email),
-            DataEntry("logo_<" + tokenId + ">", logo),
-            DataEntry("ticker_<" + tokenId + ">", ticker),
-            DataEntry("link_<" + tokenId + ">", link),
+        [
+            StringEntry("description_<en>_<" + tokenId + ">", description),
+            StringEntry("email_<" + tokenId + ">", email),
+            StringEntry("logo_<" + tokenId + ">", logo),
+            StringEntry("ticker_<" + tokenId + ">", ticker),
+            StringEntry("link_<" + tokenId + ">", link),
             # Hash for link validation
-            DataEntry("tasks_" + tokenId + "_hash", hash),
-            DataEntry("version_<" + tokenId + ">", 0),
-            DataEntry("status_<" + tokenId + ">", 0),
-            DataEntry("tasks_" + tokenId + "_status", "proposed")
-        ])
+            StringEntry("tasks_" + tokenId + "_hash", hash),
+            IntegerEntry("version_<" + tokenId + ">", 0),
+            IntegerEntry("status_<" + tokenId + ">", 0),
+            StringEntry("tasks_" + tokenId + "_status", "proposed")
+        ]
     } else throw("checks are not passed")
 }
 
 @Callable(i)
 func resetHash(taskId: String, hash: String) = {
-    WriteSet([
+    [
         # Hash for link validation
-        DataEntry("tasks_"+taskId+"_hash", hash)
-    ])
+        StringEntry("tasks_"+taskId+"_hash", hash)
+    ]
 }
 
 @Callable(i)
 func hideTask(taskId: String) = {
-    WriteSet([
-        DataEntry("tasks_" + taskId + "_status", "hide")
-    ])
+    [
+        StringEntry("tasks_" + taskId + "_status", "hide")
+    ]
 }
 
 @Callable(i)
@@ -183,11 +183,11 @@ func voteForTaskProposal(taskId: String, voteValue: String) = {
         
 
         let newVotingState = votingState + voteValueInt
-        WriteSet([
-            DataEntry(votingKey, newVotingState),
-            DataEntry(voteKey, voteValueInt),
-            DataEntry(votesAmountKey, votesAmountState)
-        ])
+        [
+            IntegerEntry(votingKey, newVotingState),
+            IntegerEntry(voteKey, voteValueInt),
+            IntegerEntry(votesAmountKey, votesAmountState)
+        ]
     } else throw("checks are not passed")
 }
 
@@ -196,18 +196,18 @@ func voteForTaskProposal(taskId: String, voteValue: String) = {
 func finishTaskProposalVoting(taskId: String) = {
     if (finishTaskProposalVotingConditions(i.caller, taskId)) then {
         let votingKey = "tasks_"+taskId+"_voting_state"
-        WriteSet([
-            DataEntry("tasks_" + taskId + "_status",
+        [
+            StringEntry("tasks_" + taskId + "_status",
                 if (tryGetInteger(votingKey) > 0)
                     then "approved"
                     else "rejected"
             ),
-            DataEntry("status_<" + taskId + ">",
+            IntegerEntry("status_<" + taskId + ">",
                 if (tryGetInteger(votingKey) > 0)
                     then 2
                     else 0
             )
-        ])
+        ]
     } else throw("checks are not passed")
 }
 
@@ -217,9 +217,9 @@ func rejectTask(taskId: String) = {
     # called by Working Group Member to undo the task
     # only in extraordinary cases
     if (isGroupMember(i.caller)) then {
-        WriteSet([
-            DataEntry("tasks_"+taskId+"_status", "rejected")
-        ])
+        [
+            StringEntry("tasks_"+taskId+"_status", "rejected")
+        ]
     } else throw("grants working group access only")
 }
 
